@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150">
+  <defs>
+    <style>
+      .navy { fill: #0A2E5C; }
+      .green { fill: #00A878; }
+      .white { fill: #FFFFFF; }
+    </style>
+    <clipPath id="shield-clip">
+       <path d="M20,20 L130,20 L130,60 Q130,120 75,140 Q20,120 20,60 Z" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#shield-clip)">
+      <rect x="0" y="0" width="150" height="150" class="navy" />
+      <path d="M-20,120 L160,50 L160,160 L-20,160 Z" class="green" />
+      <path d="M-20,115 L160,45 L160,55 L-20,125 Z" class="white" />
+  </g>
+  
+  <path class="white" d="M85,55 Q90,75 105,80 Q90,85 85,105 Q80,85 65,80 Q80,75 85,55 Z" />
+</svg>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CleanShine Pro - Flyer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500&display=swap');
+
+        :root {
+            --navy: #0A2E5C;
+            --emerald: #00A878;
+            --white: #FFFFFF;
+            --light-gray: #F3F4F6;
+            --charcoal: #2C2C2C;
+        }
+
+        body {
+            background-color: #e5e5e5;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page {
+            width: 8.5in;
+            height: 11in;
+            background: white;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            background-color: var(--navy);
+            color: white;
+            padding: 0.5in;
+            position: relative;
+        }
+
+        .header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border-bottom: 50px solid white;
+            border-left: 500px solid transparent;
+            width: 100%;
+        }
+
+        .brand h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 28pt;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .brand span {
+            color: var(--emerald);
+            font-weight: 300;
+        }
+
+        .headline {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16pt;
+            margin-top: 20px;
+            max-width: 70%;
+            font-weight: 600;
+            color: #E5E7EB;
+        }
+
+        /* BODY */
+        .content {
+            padding: 0.5in;
+            flex-grow: 1;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .service-col h3 {
+            color: var(--navy);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14pt;
+            border-bottom: 2px solid var(--emerald);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .service-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .service-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+            color: var(--charcoal);
+            font-size: 10pt;
+        }
+
+        .service-list li::before {
+            content: "✓";
+            color: var(--emerald);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* TRUST BAR */
+        .trust-bar {
+            background-color: var(--light-gray);
+            padding: 20px 0.5in;
+            display: flex;
+            justify-content: space-between;
+            margin: 30px -0.5in;
+        }
+
+        .trust-item {
+            text-align: center;
+            font-size: 9pt;
+            font-weight: 600;
+            color: var(--navy);
+            text-transform: uppercase;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            margin-top: auto;
+            margin-bottom: 20px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--emerald);
+            color: white;
+            padding: 15px 40px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 14pt;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .contact-details {
+            font-size: 11pt;
+            color: var(--navy);
+            font-weight: 500;
+        }
+
+        /* FOOTER */
+        .footer {
+            background-color: var(--charcoal);
+            color: white;
+            padding: 15px 0.5in;
+            font-size: 8pt;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: none;
+            }
+
+            .page {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="brand">
+                <img src="../01 Logo/logo.png" alt="CleanShine Pro" style="max-width: 350px; height: auto;">
+            </div>
+            <div class="headline">
+                Commercial & Residential Cleaning with Corporate Standards.
+            </div>
+        </div>
+
+        <div class="content">
+            <p style="font-size: 11pt; color: #4B5563; line-height: 1.5; margin-bottom: 30px;">
+                We provide reliable, insured, and high-quality cleaning services tailored to your needs.
+                Whether it's your office or your home, we bring the same level of professionalism and detail.
+            </p>
+
+            <div class="trust-bar">
+                <div class="trust-item">Fully Insured</div>
+                <div class="trust-item">Background Checked</div>
+                <div class="trust-item">Quality Guaranteed</div>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-col">
+                    <h3>Commercial</h3>
+                    <ul class="service-list">
+                        <li>Office Buildings & Complexes</li>
+                        <li>Medical Clinics & Dental</li>
+                        <li>Post-Construction Cleanup</li>
+                        <li>Retail Spaces</li>
+                        <li>Property Management</li>
+                    </ul>
+                </div>
+                <div class="service-col">
+                    <h3>Residential</h3>
+                    <ul class="service-list">
+                        <li>Recurring Maintenance</li>
+                        <li>Deep Cleaning</li>
+                        <li>Move-In / Move-Out</li>
+                        <li>Airbnb Turnover</li>
+                        <li>Spring Cleaning</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cta-section" style="margin-top: 40px;">
+                <div style="font-weight: bold; color: var(--navy); margin-bottom: 10px;">Ready for a spotless space?
+                </div>
+                <a href="#" class="cta-button">REQUEST A FREE QUOTE</a>
+                <div class="contact-details">
+                    Call: (555) 123-4567 &nbsp;|&nbsp; Visit: www.cleanshinepro.com
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2026 CleanShine Pro LLC. All rights reserved. Licensed & Insured.
+        </div>
+    </div>
+</body>
+
+</html>

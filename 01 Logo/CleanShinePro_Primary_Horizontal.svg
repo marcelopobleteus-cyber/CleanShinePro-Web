@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&amp;display=swap');
+      .navy { fill: #0A2E5C; }
+      .emerald { fill: #00A878; }
+      .white { fill: #FFFFFF; }
+      .text-navy { fill: #0A2E5C; font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: -1px; }
+      .text-emerald { fill: #00A878; font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 0.5px; }
+    </style>
+  </defs>
+
+  <!-- Group: Icon -->
+  <g id="icon" transform="translate(10, 10) scale(1.0)">
+    <!-- Base Shield Shape (Masking source conceptually) -->
+    
+    <!-- Top-Left Segment (Navy) -->
+    <!-- Custom path for diagonal cut: Top-Right to Bottom-Leftish -->
+    <!-- Shield Points: TopLeft(0,10), TopRight(110,10), BottomTip(55,130) -->
+    <path class="navy" d="M10,15 L55,5 L100,15 L100,45 L10,105 Z" />
+    <!-- Note: Above is a rough approximation, let's use the precise "Clip By Shape" method for perfect fit -->
+    
+    <!-- Better Approach: Draw Full Shield in Navy, then cut bottom-right with Emerald, then cut Stripe -->
+    <!-- Full Shield Path: 10,15 .. 100,15 .. 100,60 .. 55,130 .. 10,60 .. 10,15 -->
+    
+    <!-- 1. Top Section (Navy) -->
+    <path class="navy" d="M10,20 L55,10 L100,20 L100,55 L25,115 L10,80 Z" />
+    
+    <!-- 2. Bottom Section (Emerald) -->
+    <path class="emerald" d="M30,120 L100,65 L100,80 Q55,140 10,80 Q15,100 30,120 Z" />
+    
+    <!-- 3. Diagonal White Stripe (Intersection) -->
+    <!-- This creates the separation. We draw it explicitly to ensure the gap is standard -->
+    <path class="white" d="M22,118 L100,55 L100,62 L28,122 Z" />
+
+    <!-- 4. Sparkle/Star (White Negative Space) -->
+    <!-- Centered on the diagonal cut -->
+    <path class="white" d="M62,55 Q65,70 75,72 Q65,74 62,89 Q59,74 49,72 Q59,70 62,55 Z" />
+  </g>
+
+  <!-- Group: Wordmark -->
+  <g id="wordmark" transform="translate(120, 0)">
+    <!-- CLEANSHINE -->
+    <text x="10" y="85" font-size="64" class="text-navy">CLEANSHINE</text>
+    
+    <!-- PRO with Lines -->
+    <g transform="translate(10, 110)">
+      <!-- Left Line -->
+      <line x1="0" y1="-8" x2="160" y2="-8" stroke="#0A2E5C" stroke-width="3" stroke-linecap="round" />
+      
+      <!-- PRO Text -->
+      <text x="175" y="5" font-size="32" class="text-emerald" font-weight="900">PRO</text>
+      
+      <!-- Right Line -->
+      <line x1="260" y1="-8" x2="420" y2="-8" stroke="#0A2E5C" stroke-width="3" stroke-linecap="round" />
+    </g>
+  </g>
+
+</svg>
