@@ -187,10 +187,10 @@ const BookingPage = () => {
                                 <div>
                                     <label className="block text-slate-400 text-sm mb-2">Frequency</label>
                                     <select name="frequency" value={formData.frequency} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
-                                        <option value="one-time">One-Time Clean</option>
-                                        <option value="weekly">Weekly (Save 20%)</option>
-                                        <option value="bi-weekly">Bi-Weekly (Save 15%)</option>
-                                        <option value="monthly">Monthly (Save 10%)</option>
+                                        <option className="bg-[#0B1121] text-white" value="one-time">One-Time Clean</option>
+                                        <option className="bg-[#0B1121] text-white" value="weekly">Weekly (Save 20%)</option>
+                                        <option className="bg-[#0B1121] text-white" value="bi-weekly">Bi-Weekly (Save 15%)</option>
+                                        <option className="bg-[#0B1121] text-white" value="monthly">Monthly (Save 10%)</option>
                                     </select>
                                 </div>
                                 {formData.serviceType.includes('Residential') && (
@@ -198,16 +198,16 @@ const BookingPage = () => {
                                         <div>
                                             <label className="block text-slate-400 text-sm mb-2">Bedrooms</label>
                                             <select name="beds" value={formData.beds} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
-                                                <option value="">Select...</option>
-                                                {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} Beds</option>)}
+                                                <option className="bg-[#0B1121] text-white" value="">Select...</option>
+                                                {[1, 2, 3, 4, 5, 6].map(n => <option className="bg-[#0B1121] text-white" key={n} value={n}>{n} Beds</option>)}
                                             </select>
                                             {errors.beds && <p className="text-red-500 text-sm mt-1">{errors.beds}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-slate-400 text-sm mb-2">Bathrooms</label>
                                             <select name="baths" value={formData.baths} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
-                                                <option value="">Select...</option>
-                                                {[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map(n => <option key={n} value={n}>{n} Baths</option>)}
+                                                <option className="bg-[#0B1121] text-white" value="">Select...</option>
+                                                {[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map(n => <option className="bg-[#0B1121] text-white" key={n} value={n}>{n} Baths</option>)}
                                             </select>
                                             {errors.baths && <p className="text-red-500 text-sm mt-1">{errors.baths}</p>}
                                         </div>
@@ -230,10 +230,10 @@ const BookingPage = () => {
                                 <div>
                                     <label className="block text-slate-400 text-sm mb-2">Preferred Time Window</label>
                                     <select name="time" value={formData.time} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors text-white">
-                                        <option value="">Select...</option>
-                                        <option value="morning">Morning (8am - 12pm)</option>
-                                        <option value="afternoon">Afternoon (12pm - 4pm)</option>
-                                        <option value="flexible">Flexible</option>
+                                        <option className="bg-[#0B1121] text-white" value="">Select...</option>
+                                        <option className="bg-[#0B1121] text-white" value="morning">Morning (8am - 12pm)</option>
+                                        <option className="bg-[#0B1121] text-white" value="afternoon">Afternoon (12pm - 4pm)</option>
+                                        <option className="bg-[#0B1121] text-white" value="flexible">Flexible</option>
                                     </select>
                                     {errors.time && <p className="text-red-500 text-sm mt-1">{errors.time}</p>}
                                 </div>
