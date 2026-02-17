@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import Hero from './components/Hero';
 import TrustBar from './components/TrustBar';
 import Services from './components/Services';
@@ -82,6 +83,7 @@ function App() {
 
       <CommercialAssistant />
       <Footer onNavigate={setCurrentPage} />
+      <Analytics />
     </div>
   );
 }
