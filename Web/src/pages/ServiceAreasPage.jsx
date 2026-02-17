@@ -43,10 +43,13 @@ const ServiceAreasPage = ({ onNavigate }) => {
 
                     {/* Map Placeholder */}
                     <div className="bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden h-[400px] relative group">
-                        <div className="absolute inset-0 bg-slate-800 animate-pulse flex items-center justify-center text-slate-500">
-                            <MapPin className="w-12 h-12 text-slate-600 mb-2" />
-                            <span className="text-sm">Interactive Service Map Loading...</span>
-                        </div>
+                        <iframe
+                            className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                            src="https://maps.google.com/maps?q=Acworth,+GA&t=&z=11&ie=UTF8&iwloc=&output=embed"
+                            allowFullScreen
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                        ></iframe>
                         {/* Overlay CTA */}
                         <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent">
                             <button onClick={() => onNavigate('booking')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
