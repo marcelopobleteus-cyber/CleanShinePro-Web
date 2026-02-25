@@ -34,8 +34,18 @@ const ServicesPage = ({ onNavigate }) => {
                                     <h3 className="text-2xl font-bold font-heading">Commercial & Corporate</h3>
                                 </div>
                                 <p className="text-slate-400 mb-6 leading-relaxed">
-                                    We maintain the professional image of your business while ensuring a pathogen-free environment for your employees. Our night crews work invisibly to prepare your office for the next day.
+                                    <span className="text-white font-bold block mb-1">Outcome:</span> A pathogen-free, professional environment that boosts employee morale and brand prestige.
                                 </p>
+                                <div className="grid grid-cols-2 gap-4 text-xs mb-6">
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Ideal Client:</span>
+                                        Corporate Offices, Clinics
+                                    </div>
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Frequency:</span>
+                                        Daily / 3x Weekly
+                                    </div>
+                                </div>
                                 <ul className="space-y-3">
                                     {['Lobby & Reception Detailing', 'Restroom Sanitation (Hospital Grade)', 'Workstation Disinfection', 'Trash & Recycling Management'].map((item, i) => (
                                         <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
@@ -46,8 +56,9 @@ const ServicesPage = ({ onNavigate }) => {
                             </div>
                         </div>
                     </div>
+                    {/* ... (rest of commercial content) ... */}
                     <div>
-                        <h2 className="text-3xl font-bold mb-6">Designed for Business</h2>
+                        <h2 className="text-3xl font-bold mb-6 italic text-emerald-400">Design Your Workplace for Success</h2>
                         <div className="space-y-8">
                             <div className="flex gap-4">
                                 <div className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center shrink-0">
@@ -74,7 +85,7 @@ const ServicesPage = ({ onNavigate }) => {
                 {/* Section 2: Residential */}
                 <section className="grid md:grid-cols-2 gap-12 items-center">
                     <div className="order-2 md:order-1">
-                        <h2 className="text-3xl font-bold mb-6">Home Sanctuary</h2>
+                        <h2 className="text-3xl font-bold mb-6 italic text-emerald-400">Reclaim Your Home Sanctuary</h2>
                         <div className="space-y-8">
                             <div className="flex gap-4">
                                 <div className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center shrink-0">
@@ -110,8 +121,18 @@ const ServicesPage = ({ onNavigate }) => {
                                     <h3 className="text-2xl font-bold font-heading">Residential Cleaning</h3>
                                 </div>
                                 <p className="text-slate-400 mb-6 leading-relaxed">
-                                    Your home is your sanctuary. Our vetted professionals treat it with the utmost respect, using safe, non-toxic products upon request.
+                                    <span className="text-white font-bold block mb-1">Outcome:</span> A healthy, stress-free home where you can truly relax without thinking about chores.
                                 </p>
+                                <div className="grid grid-cols-2 gap-4 text-xs mb-6">
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Ideal Client:</span>
+                                        Busy Families, Professionals
+                                    </div>
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Frequency:</span>
+                                        Weekly / Bi-Weekly
+                                    </div>
+                                </div>
                                 <ul className="space-y-3">
                                     {['Kitchen Degreasing & Polishing', 'Bathroom Descaling & Sanitation', 'Floor Care (Wood, Tile, Carpet)', 'Internal Window Cleaning'].map((item, i) => (
                                         <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
@@ -137,11 +158,21 @@ const ServicesPage = ({ onNavigate }) => {
                             <div className="p-8">
                                 <div className="flex items-center gap-3 mb-4">
                                     <Star className="text-emerald-400 w-6 h-6" />
-                                    <h3 className="text-2xl font-bold font-heading">Airbnb & Short-Term</h3>
+                                    <h3 className="text-2xl font-bold font-heading">Short-Term Rentals (Airbnb)</h3>
                                 </div>
                                 <p className="text-slate-400 mb-6 leading-relaxed">
-                                    Maximize your occupancy and ratings. We handle the chaos of turnover so you can focus on hosting. Speed, presentation, and reliability are our promises.
+                                    <span className="text-white font-bold block mb-1">Outcome:</span> Consistent 5-star cleanliness ratings and a turnkey hosting experience.
                                 </p>
+                                <div className="grid grid-cols-2 gap-4 text-xs mb-6">
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Ideal Client:</span>
+                                        Superhosts, Property Mgrs
+                                    </div>
+                                    <div className="p-2 bg-white/5 rounded border border-white/5">
+                                        <span className="text-emerald-400 block font-bold mb-1">Frequency:</span>
+                                        Per Booking Turnover
+                                    </div>
+                                </div>
                                 <ul className="space-y-3">
                                     {['Same-Day Turnover (Window 11AM-3PM)', 'Hotel-Quality Linen Staging', 'Essential Restocking (Soap, TP, Coffee)', 'Damage & Maintenance Reporting'].map((item, i) => (
                                         <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
@@ -153,7 +184,7 @@ const ServicesPage = ({ onNavigate }) => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-3xl font-bold mb-6">Guest-Ready Guarantee</h2>
+                        <h2 className="text-3xl font-bold mb-6 italic text-emerald-400">The Superhost Standard</h2>
                         <div className="space-y-8">
                             <div className="flex gap-4">
                                 <div className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center shrink-0">
@@ -169,7 +200,7 @@ const ServicesPage = ({ onNavigate }) => {
                                     <Key className="w-6 h-6 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h4 className="text-xl font-bold mb-2">The Superhost Standard</h4>
+                                    <h4 className="text-xl font-bold mb-2">Hotel-Quality Staging</h4>
                                     <p className="text-slate-400 text-sm">We don't just clean; we stage. Towels folded perfectly, welcome kits arranged, and every surface photo-ready.</p>
                                 </div>
                             </div>

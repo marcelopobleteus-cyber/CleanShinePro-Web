@@ -5,7 +5,10 @@ import { getGeminiResponse } from '../services/gemini';
 const CommercialAssistant = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { type: 'bot', text: "Start your journey to a cleaner space! How can I assist you today?" }
+        { type: 'bot', text: "Welcome to CleanShine Pro! I'm Shine, your expert cleaning consultant. Are you looking to transform your office morale or reclaim your home sanctuary today?" }
+    ]);
+    const [quickActions, setQuickActions] = useState([
+        "Free Office Quote", "Deep Home Clean", "Airbnb Turnover", "Our Guarantee"
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -31,17 +34,17 @@ const CommercialAssistant = () => {
         scrollToBottom();
     }, [messages, showForm, formStep]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    const handleSend = async (overrideMsg = null) => {
+        const userMsg = overrideMsg || input.trim();
+        if (!userMsg) return;
 
-        const userMsg = input.trim();
         setMessages(prev => [...prev, { type: 'user', text: userMsg }]);
         setInput('');
         setIsTyping(true);
 
         try {
-            // Call Gemini AI
-            let aiText = await getGeminiResponse(userMsg);
+            // Call Gemini AI with History
+            let aiText = await getGeminiResponse(userMsg, messages);
             let triggerForm = false;
 
             // Check for hidden trigger from AI
@@ -129,6 +132,21 @@ const CommercialAssistant = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {/* Quick Actions */}
+                        {messages.length < 3 && !showForm && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {quickActions.map(action => (
+                                    <button
+                                        key={action}
+                                        onClick={() => handleSend(action)}
+                                        className="text-[11px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-full hover:bg-emerald-500 hover:text-white transition-all"
+                                    >
+                                        {action}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Interactive Form Logic */}
                         {showForm && (

@@ -16,7 +16,7 @@ const BookingPage = () => {
         email: '',
         phone: '',
         address: '',
-        city: 'Acworth',
+        city: 'Woodstock',
         zip: ''
     });
 
@@ -25,7 +25,7 @@ const BookingPage = () => {
     const [isSuccess, setIsSuccess] = useState(false);
 
     useEffect(() => {
-        document.title = 'Book Your Cleaning | CleanShine Pro Acworth';
+        document.title = 'Book Your Cleaning | CleanShine Pro Woodstock';
         window.scrollTo(0, 0);
     }, []);
 
@@ -102,7 +102,7 @@ const BookingPage = () => {
             "address": {
                 "@type": "PostalAddress",
                 "streetAddress": "900 Buice Lake Pkwy",
-                "addressLocality": "Acworth",
+                "addressLocality": "Woodstock",
                 "addressRegion": "GA",
                 "postalCode": "30102",
                 "addressCountry": "US"
@@ -110,7 +110,7 @@ const BookingPage = () => {
             "telephone": "+1-555-012-3456",
             "priceRange": "$$"
         },
-        "areaServed": ["Acworth", "Kennesaw", "Marietta", "Woodstock"]
+        "areaServed": ["Woodstock", "Acworth", "Kennesaw", "Marietta"]
     };
 
     if (isSuccess) {

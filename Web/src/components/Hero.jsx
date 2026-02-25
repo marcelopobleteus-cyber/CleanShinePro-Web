@@ -25,25 +25,25 @@ const Hero = ({ onNavigate }) => {
           </div>
 
           <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-6 font-heading">
-            Professional & Reliable <br />
+            <span className="text-white">Expert Home & Office</span> <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              Cleaning Services.
+              Cleaning in Woodstock.
             </span>
           </h1>
-          <p className="text-2xl text-white font-medium mb-2">Acworth & Cobb County</p>
+          <p className="text-2xl text-white font-medium mb-4">Serving Woodstock, Cherokee & Cobb County</p>
 
-          <p className="text-lg text-slate-400 mb-8 leading-relaxed font-light max-w-lg">
-            Fully Insured & Bonded | Eco-Friendly Products | 24-Hour Clean Warranty
+          <p className="text-lg text-slate-300 mb-8 leading-relaxed font-light max-w-lg">
+            Experience a deeper clean with our <span className="text-white font-semibold">Licensed & Insured</span> pros. We use eco-friendly products and provide a <span className="text-white font-semibold">100% Satisfaction Guarantee</span> to give you a stress-free, spotless sanctuary.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button onClick={() => onNavigate('booking')} className="group relative px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg overflow-hidden transition-all shadow-lg hover:shadow-emerald-500/20">
+            <button onClick={() => onNavigate('booking')} className="group relative px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg overflow-hidden transition-all shadow-lg hover:shadow-emerald-500/20">
               <span className="relative flex items-center gap-2">
-                Book Online Now <ArrowRight className="w-5 h-5" />
+                Get a Free Quote <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </span>
             </button>
-            <button onClick={() => window.location.href = 'tel:+1234567890'} className="px-8 py-4 bg-transparent border border-white/20 hover:bg-white/5 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2">
-              <Phone className="w-5 h-5" /> Call for Free Estimate
+            <button onClick={() => window.location.href = 'tel:+1234567890'} className="px-8 py-4 bg-transparent border border-white/20 hover:bg-white/10 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+              <Phone className="w-5 h-5" /> Call Now
             </button>
           </div>
         </div>

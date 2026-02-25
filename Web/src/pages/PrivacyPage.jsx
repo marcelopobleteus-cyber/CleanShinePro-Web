@@ -84,7 +84,7 @@ const PrivacyPage = () => {
                         <div className="bg-white/5 p-6 rounded-xl border border-white/5">
                             <p className="text-white font-bold mb-1">CleanShine Pro LLC</p>
                             <p className="text-slate-400">900 Buice Lake Pkwy</p>
-                            <p className="text-slate-400 mb-4">Acworth, GA 30102</p>
+                            <p className="text-slate-400 mb-4">Woodstock, GA 30188</p>
                             <p className="text-emerald-400">contact@cleanshinepro.com</p>
                         </div>
                     </section>

@@ -14,6 +14,8 @@ import BookingPage from './pages/BookingPage';
 import AboutPage from './pages/AboutPage';
 import PrivacyPage from './pages/PrivacyPage';
 import CommercialAssistant from './components/CommercialAssistant';
+import FAQ from './components/FAQ';
+import { Phone, ArrowRight } from 'lucide-react';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -41,8 +43,77 @@ function App() {
             <Hero onNavigate={setCurrentPage} />
             <TrustBar />
             <Services onNavigate={setCurrentPage} />
+
+            {/* Mid-Page CTA */}
+            <section className="py-20 bg-gradient-to-r from-emerald-900/10 to-blue-900/10 border-y border-white/5">
+              <div className="container mx-auto px-6 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready for a Cleaner, Healthier Space?</h2>
+                <p className="text-slate-400 mb-8 max-w-xl mx-auto">Join hundreds of satisfied Woodstock residents who have reclaimed their time and peace of mind.</p>
+                <button onClick={() => setCurrentPage('booking')} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-emerald-500/30">
+                  Get Your Free Estimate
+                </button>
+              </div>
+            </section>
+
             <Process />
             <Testimonials />
+
+            <FAQ />
+
+            {/* Bottom Final CTA / Lead Form Hook */}
+            <section className="py-24 bg-[#0B1121] border-t border-white/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full bg-emerald-500/5 blur-3xl pointer-events-none"></div>
+              <div className="container mx-auto px-6 max-w-5xl relative z-10">
+                <div className="grid md:grid-cols-2 gap-16 items-center">
+                  <div>
+                    <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Fast, Reliable & <span className="text-emerald-400">Guaranteed.</span></h2>
+                    <p className="text-slate-400 mb-8 text-lg">
+                      Whether it's a deep home clean or daily office maintenance, we bring the same level of precision and care to every job.
+                    </p>
+                    <ul className="space-y-4 mb-8">
+                      <li className="flex items-center gap-3 text-slate-300">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
+                        Licensed, Bonded & Insured
+                      </li>
+                      <li className="flex items-center gap-3 text-slate-300">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
+                        100% Satisfaction Guarantee
+                      </li>
+                      <li className="flex items-center gap-3 text-slate-300">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
+                        Eco-Friendly & Pet-Safe Products
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="bg-[#020617] p-8 rounded-3xl border border-white/10 shadow-2xl">
+                    <h3 className="text-2xl font-bold text-white mb-6">Request a Quick Call</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Name</label>
+                        <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors" placeholder="John Doe" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Phone</label>
+                        <input type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors" placeholder="(123) 456-7890" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Service</label>
+                        <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors appearance-none">
+                          <option className="bg-[#020617]">Residential Cleaning</option>
+                          <option className="bg-[#020617]">Commercial Cleaning</option>
+                          <option className="bg-[#020617]">Move-In/Out</option>
+                          <option className="bg-[#020617]">Airbnb Turnover</option>
+                        </select>
+                      </div>
+                      <button onClick={() => setCurrentPage('contact')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 mt-4 group">
+                        Send Request <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </button>
+                      <p className="text-center text-[10px] text-slate-500 mt-4 italic">By clicking "Send Request", you agree to be contacted via call/text. No spam, ever.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </>
         );
     }
@@ -50,6 +121,15 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020617]">
+      {/* Sticky Mobile Call Button */}
+      <div className="md:hidden fixed bottom-6 right-6 z-[60]">
+        <a
+          href="tel:+1234567890"
+          className="flex items-center justify-center w-14 h-14 bg-emerald-500 text-white rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-bounce"
+        >
+          <Phone className="w-6 h-6" />
+        </a>
+      </div>
       {/* Navigation - White Strip */}
       <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 py-4 shadow-sm transition-all duration-300">
         <div className="container mx-auto px-6 flex justify-between items-center">

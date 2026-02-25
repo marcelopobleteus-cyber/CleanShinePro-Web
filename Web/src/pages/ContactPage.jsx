@@ -54,7 +54,7 @@ const ContactPage = () => {
                                     <h4 className="font-bold text-lg text-white mb-2">Location</h4>
                                     <p className="text-slate-400 leading-relaxed">
                                         900 Buice Lake Pkwy<br />
-                                        Acworth, GA 30102
+                                        Woodstock, GA 30188
                                     </p>
                                 </div>
                             </div>

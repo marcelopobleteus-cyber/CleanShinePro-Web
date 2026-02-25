@@ -55,7 +55,7 @@ const Footer = ({ onNavigate }) => {
                         <ul className="space-y-4 text-sm text-slate-400">
                             <li className="flex items-start gap-3">
                                 <MapPin className="text-emerald-500 mt-0.5" size={18} />
-                                <span>900 Buice Lake Pkwy<br />Acworth, GA 30102</span>
+                                <span>900 Buice Lake Pkwy<br />Woodstock, GA 30188</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="text-emerald-500" size={18} />

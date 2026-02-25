@@ -31,10 +31,10 @@ const Services = ({ onNavigate }) => {
 
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
-                        Tailored <span className="text-emerald-400">Cleaning Solutions</span>
+                        Premium <span className="text-emerald-400">Cleaning Services</span> in Woodstock
                     </h2>
-                    <p className="text-slate-400 max-w-2xl mx-auto font-light">
-                        Choose your sector to see our specialized protocols.
+                    <p className="text-slate-400 max-w-2xl mx-auto font-light text-lg">
+                        Expert solutions designed to give you more time, better health, and a pristine environment you'll love coming home to.
                     </p>
                 </div>
 
@@ -75,7 +75,7 @@ const Services = ({ onNavigate }) => {
                                     : 'text-slate-400 hover:text-white hover:bg-white/5 hover:scale-105'}`}
                         >
                             <CalendarClock className={`w-5 h-5 transition-transform duration-300 ${activeTab === 'airbnb' ? 'scale-110' : ''}`} />
-                            Airbnb
+                            Short-Term Rental
                         </button>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ const Services = ({ onNavigate }) => {
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {services[activeTab].map((service, index) => (
-                        <div key={index} className="group p-8 rounded-2xl bg-[#0B1121] border border-white/5 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_40px_-10px_rgba(16,185,129,0.1)] relative overflow-hidden">
+                        <div key={index} className="group p-8 rounded-2xl bg-[#0B1121] border border-white/5 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_40px_-10px_rgba(16,185,129,0.1)] relative overflow-hidden flex flex-col">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 {activeTab === 'commercial' ? <Building2 className="w-24 h-24 text-emerald-500" /> :
                                     activeTab === 'residential' ? <Home className="w-24 h-24 text-emerald-500" /> :
@@ -92,7 +92,9 @@ const Services = ({ onNavigate }) => {
                             </div>
 
                             <h3 className="text-xl font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors relative z-10">{service.title}</h3>
-                            <p className="text-slate-400 text-sm mb-6 leading-relaxed relative z-10">{service.desc}</p>
+                            <p className="text-slate-400 text-sm mb-6 leading-relaxed relative z-10 flex-grow">
+                                {service.desc} <span className="text-emerald-500/80 font-medium italic block mt-2">The result: A spotless, ready-to-use space.</span>
+                            </p>
 
                             <ul className="space-y-2 relative z-10 mb-6">
                                 {service.features.map((feature, i) => (
@@ -104,12 +106,20 @@ const Services = ({ onNavigate }) => {
 
                             <button
                                 onClick={() => onNavigate('booking')}
-                                className="w-full py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-semibold text-sm transition-all duration-300 relative z-10"
+                                className="w-full py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-sm transition-all duration-300 relative z-10"
                             >
-                                Book This Service
+                                Get a Quote
                             </button>
                         </div>
                     ))}
+                </div>
+
+                {/* Secondary CTA for Flow */}
+                <div className="mt-16 text-center">
+                    <p className="text-slate-500 mb-6 font-medium">Not sure which service you need?</p>
+                    <button onClick={() => onNavigate('contact')} className="px-10 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold rounded-lg transition-all">
+                        Compare All Services
+                    </button>
                 </div>
 
             </div>

@@ -3,17 +3,17 @@ import { MapPin, ArrowRight } from 'lucide-react';
 
 const ServiceAreasPage = ({ onNavigate }) => {
     const areas = [
-        { city: "Acworth", zip: ["30101", "30102"] },
+        { city: "Woodstock", zip: ["30188", "30189"] },
         { city: "Kennesaw", zip: ["30144", "30152"] },
         { city: "Marietta", zip: ["30060", "30061", "30062", "30063", "30064", "30065", "30066", "30067", "30068"] },
-        { city: "Woodstock", zip: ["30188", "30189"] },
+        { city: "Acworth", zip: ["30101", "30102"] },
     ];
 
     return (
         <div className="pt-24 pb-12 bg-[#020617] min-h-screen text-white">
             <div className="container mx-auto px-6">
                 <div className="max-w-3xl mx-auto text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-6">Serving <span className="text-emerald-400">Acworth & Cobb County</span></h1>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-6">Serving <span className="text-emerald-400">Woodstock & Cherokee County</span></h1>
                     <p className="text-slate-400 text-lg">
                         We provide premium residential and commercial cleaning services to the following communities in Georgia.
                     </p>
@@ -45,7 +45,7 @@ const ServiceAreasPage = ({ onNavigate }) => {
                     <div className="bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden h-[400px] relative group">
                         <iframe
                             className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                            src="https://maps.google.com/maps?q=Acworth,+GA&t=&z=11&ie=UTF8&iwloc=&output=embed"
+                            src="https://maps.google.com/maps?q=Woodstock,+GA&t=&z=11&ie=UTF8&iwloc=&output=embed"
                             allowFullScreen
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"

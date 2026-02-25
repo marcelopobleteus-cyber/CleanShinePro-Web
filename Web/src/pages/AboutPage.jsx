@@ -14,6 +14,11 @@ const AboutPage = ({ onNavigate }) => {
                 <p className="relative z-10 text-slate-400 max-w-2xl mx-auto text-lg font-light">
                     Born in Atlanta, built on excellence. We are redefining the cleaning industry with technology, integrity, and hospital-grade precision.
                 </p>
+                <div className="relative z-10 mt-12 p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl max-w-4xl mx-auto backdrop-blur-sm">
+                    <p className="text-slate-200 text-lg leading-relaxed italic">
+                        "At CleanShine Pro, we provide premium residential and commercial cleaning services to busy professionals and business owners in Woodstock and Cherokee County. Unlike traditional cleaning companies, we combine hospital-grade sanitation protocols with a white-glove service experience, ensuring that every space we touch isn't just clean—it's transformationally pristine."
+                    </p>
+                </div>
             </div>
 
             <div className="container mx-auto px-6 max-w-6xl space-y-24">
@@ -48,8 +53,8 @@ const AboutPage = ({ onNavigate }) => {
 
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                "Atlanta (HQ)", "Acworth", "Marietta", "Alpharetta",
-                                "Sandy Springs", "Roswell", "Kennesaw", "Woodstock"
+                                "Atlanta (HQ)", "Woodstock", "Marietta", "Alpharetta",
+                                "Sandy Springs", "Roswell", "Kennesaw", "Acworth"
                             ].map((city, i) => (
                                 <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-3 rounded-lg border border-white/5">
                                     <MapPin className="w-4 h-4 text-emerald-500" /> {city}
