@@ -138,7 +138,7 @@ function App() {
             <img
               src="/logo.png"
               alt="CleanShine Pro"
-              className="h-28 md:h-40 w-auto object-contain hover:scale-105 transition-transform duration-300"
+              className="h-20 md:h-24 w-auto object-contain hover:brightness-110 transition-all duration-300"
             />
           </div>
 
