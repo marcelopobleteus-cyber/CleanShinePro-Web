@@ -21,6 +21,7 @@ SALES STRATEGY:
 
 KNOWLEDGE BASE (Woodstock HQ):
 - Service Area: Woodstock (Primary), Acworth, Kennesaw, Marietta (Cherokee & Cobb County).
+- SPECIAL OFFER: 30% OFF for first-time customers. Use this to close hesitant leads.
 - Guarantee: 100% Satisfaction. If not perfect, notify within 24 hours; we re-clean for FREE.
 - Methodology: Hospital-grade sanitation + White-glove service experience.
 

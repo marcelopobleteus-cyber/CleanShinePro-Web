@@ -21,7 +21,7 @@ const Hero = ({ onNavigate }) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
             </span>
-            <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase">Get $30 OFF Your First Cleaning Service!</span>
+            <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase">Get 30% OFF Your First Cleaning Service!</span>
           </div>
 
           <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-6 font-heading">

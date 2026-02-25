@@ -292,7 +292,7 @@ const CommercialAssistant = () => {
                         </div>
                         <div>
                             <p className="text-[#020617] text-sm font-bold leading-tight mb-1">Expert Cleaner Online</p>
-                            <p className="text-slate-500 text-xs leading-tight">Hi! Ready to transform your space into a 5-star sanctuary?</p>
+                            <p className="text-slate-500 text-xs leading-tight">Hi! Claim <span className="text-emerald-600 font-bold">30% OFF</span> your first service today! 🎁</p>
                         </div>
                     </div>
                     {/* Pulsing indicator */}
