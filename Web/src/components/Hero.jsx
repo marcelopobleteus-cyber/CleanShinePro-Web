@@ -54,12 +54,12 @@ const Hero = ({ onNavigate }) => {
           {/* Main Card: Office (Bottom Layer) */}
           <div className="absolute top-8 right-0 w-[80%] h-[400px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-[#0B1121]">
             <img
-              src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
-              alt="Commercial Office Cleaning"
-              className="w-full h-full object-cover opacity-60 hover:scale-105 transition-transform duration-700"
+              src="/assets/team-hq.webp"
+              alt="CleanShine Pro Headquarters and Fleet"
+              className="w-full h-full object-cover opacity-80 hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded text-xs font-mono text-emerald-400 border border-emerald-500/30">
-              COMMERCIAL STANDARDS
+              OFFICIAL HEADQUARTERS & FLEET
             </div>
           </div>
 

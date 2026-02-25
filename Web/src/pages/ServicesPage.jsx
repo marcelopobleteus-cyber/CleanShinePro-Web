@@ -24,8 +24,8 @@ const ServicesPage = ({ onNavigate }) => {
                         <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                         <div className="relative bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                             <img
-                                src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                                alt="Commercial Office"
+                                src="/assets/team-hq.webp"
+                                alt="Commercial Team & Fleet"
                                 className="w-full h-80 object-cover opacity-80"
                             />
                             <div className="p-8">

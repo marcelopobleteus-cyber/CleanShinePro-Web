@@ -128,8 +128,8 @@ const AboutPage = ({ onNavigate }) => {
                     </div>
                     <div className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
                         <img
-                            src="https://images.unsplash.com/photo-1577412647305-991150c7d163?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                            alt="Professional Cleaning Team"
+                            src="/assets/cleaning-crew.webp"
+                            alt="CleanShine Pro Cleaning Crew"
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-90"></div>
