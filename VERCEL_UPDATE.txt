@@ -1,7 +1,0 @@
-Para actualizar Vercel con la última actualización:
-
-1.  **Automático:** Vercel detecta automáticamente los cambios en la rama `main` de GitHub. Al hacer `git push`, Vercel inicia un nuevo despliegue.
-2.  **Verificación:** Entra a tu panel de Vercel para ver el estado del despliegue ("Building" o "Ready").
-3.  **Manual (si es necesario):** Si no está conectado, ve a Settings > Git > Connect Repository.
-
-La última versión (624aa61) ya está en camino.
