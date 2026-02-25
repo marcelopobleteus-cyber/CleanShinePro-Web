@@ -14,7 +14,7 @@ const Footer = ({ onNavigate }) => {
                             <div className="text-2xl font-bold font-heading cursor-pointer" onClick={() => onNavigate('home')}>CLEANSHINE <span className="text-emerald-400">PRO</span></div>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            Setting the new standard in corporate and residential hygiene. AI-driven compliance, insured professionals, and guaranteed results.
+                            Setting the new standard in corporate and residential hygiene. Standardized excellence, insured professionals, and guaranteed results.
                         </p>
                         <div className="flex gap-4">
                             <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors"><Facebook size={18} /></a>
