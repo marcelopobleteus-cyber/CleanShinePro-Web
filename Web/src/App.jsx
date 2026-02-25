@@ -130,15 +130,20 @@ function App() {
           <Phone className="w-6 h-6" />
         </a>
       </div>
+      {/* Top Bar - Matching the new marketing look */}
+      <div className="bg-emerald-700 text-white py-2 text-center text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase sticky top-0 z-[60] border-b border-white/10">
+        Professional Cleaning • Corporate Standards • Serving Woodstock, GA
+      </div>
+
       {/* Navigation - White Strip */}
-      <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 py-4 shadow-sm transition-all duration-300">
+      <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-10 z-50 py-2 shadow-sm transition-all duration-300">
         <div className="container mx-auto px-6 flex justify-between items-center">
           {/* Enhanced Logo Visibility */}
           <div className="flex items-center cursor-pointer" onClick={() => setCurrentPage('home')}>
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="CleanShine Pro"
-              className="h-16 md:h-20 w-auto object-contain hover:scale-105 transition-transform duration-300"
+              className="h-20 md:h-28 w-auto object-contain hover:scale-105 transition-transform duration-300"
             />
           </div>
 
