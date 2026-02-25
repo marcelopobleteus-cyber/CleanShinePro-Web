@@ -41,7 +41,7 @@ const AboutPage = ({ onNavigate }) => {
                                 CleanShine Pro LLC began with a simple yet ambitious mission: to elevate the standard of cleanliness in Atlanta's cleaning market. What started as a local operation has rapidly expanded into a premier service provider for high-stakes environments.
                             </p>
                             <p className="text-slate-300 leading-relaxed">
-                                From Day 1, we rejected the "mop and bucket" status quo. Instead, we implemented <strong>AI-driven quality control</strong>, hospital-grade disinfection protocols, and a white-glove service model that caters specifically to commercial facilities and luxury residential estates.
+                                From Day 1, we rejected the "mop and bucket" status quo. Instead, we implemented **stringent quality oversight**, hospital-grade disinfection protocols, and a white-glove service model that caters specifically to commercial facilities and luxury residential estates.
                             </p>
                         </div>
                     </div>

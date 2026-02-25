@@ -45,7 +45,7 @@ const ProcessPage = () => {
                     Our <span className="text-emerald-400">Process</span>
                 </h1>
                 <p className="relative z-10 text-slate-400 max-w-2xl mx-auto text-lg font-light">
-                    Transparency at every step. From the first quote to the final polish, our automated workflow ensures reliability and consistency.
+                    Transparency at every step. From the first quote to the final polish, our streamlined workflow ensures reliability and consistency.
                 </p>
             </header>
 

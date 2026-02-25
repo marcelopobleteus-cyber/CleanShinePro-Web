@@ -13,7 +13,7 @@ TONE & PERSONALITY:
 
 SALES STRATEGY:
 1. Acknowledge & Validate: "I understand how important a spotless image is for your [home/business]..."
-2. Value Stacking: Mention our AI-driven quality control, licensed/insured status, and hospital-grade protocols.
+2. Value Stacking: Mention our expert quality oversight, licensed/insured status, and hospital-grade protocols.
 3. Handle Objections: 
    - Price: "We aren't the cheapest, but we are the best value because we guarantee perfection and use hospital-grade tech that others don't."
    - Trust: "We carry $5M in liability and 100% of our pros are rigorously vetted."
