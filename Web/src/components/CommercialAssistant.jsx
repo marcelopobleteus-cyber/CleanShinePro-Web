@@ -12,6 +12,14 @@ const CommercialAssistant = () => {
     ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [showBubble, setShowBubble] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!isOpen) setShowBubble(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [isOpen]);
 
     // Form State
     const [showForm, setShowForm] = useState(false);
@@ -269,10 +277,36 @@ const CommercialAssistant = () => {
                 </div>
             )}
 
+            {/* Welcome Bubble */}
+            {showBubble && !isOpen && (
+                <div
+                    onClick={() => {
+                        setIsOpen(true);
+                        setShowBubble(false);
+                    }}
+                    className="absolute bottom-20 right-0 w-64 bg-white border border-emerald-500/20 p-4 rounded-2xl rounded-br-sm shadow-[0_10px_40px_rgba(0,0,0,0.3)] cursor-pointer animate-in fade-in zoom-in slide-in-from-bottom-5 duration-500 group/bubble"
+                >
+                    <div className="flex gap-3">
+                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                            <Shield className="w-6 h-6 text-emerald-600 fill-current opacity-80" />
+                        </div>
+                        <div>
+                            <p className="text-[#020617] text-sm font-bold leading-tight mb-1">Expert Cleaner Online</p>
+                            <p className="text-slate-500 text-xs leading-tight">Hi! Ready to transform your space into a 5-star sanctuary?</p>
+                        </div>
+                    </div>
+                    {/* Pulsing indicator */}
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white animate-ping"></div>
+                </div>
+            )}
+
             {/* Launcher Button */}
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="group relative flex items-center justify-center w-16 h-16 bg-emerald-600 hover:bg-emerald-500 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95 z-[100]"
+                onClick={() => {
+                    setIsOpen(!isOpen);
+                    setShowBubble(false);
+                }}
+                className={`group relative flex items-center justify-center w-16 h-16 bg-emerald-600 hover:bg-emerald-500 rounded-full shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all hover:scale-110 active:scale-95 z-[100] ${!isOpen && 'animate-gentle-pulse'}`}
             >
                 {/* Shield with Eyes Icon (Custom SVG) */}
                 <div className={`transition-all duration-500 absolute inset-0 flex items-center justify-center ${isOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`}>
@@ -300,6 +334,18 @@ const CommercialAssistant = () => {
                 }
                 .animate-blink {
                     animation: blink 3s infinite;
+                }
+                @keyframes gentle-pulse {
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(16,185,129,0.3); }
+                    50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(16,185,129,0.5); }
+                }
+                .animate-gentle-pulse {
+                    animation: gentle-pulse 3s infinite ease-in-out;
+                }
+                .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
         </div>
