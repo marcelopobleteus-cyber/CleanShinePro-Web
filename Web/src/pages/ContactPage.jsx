@@ -9,17 +9,39 @@ const ContactPage = () => {
         message: ''
     });
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
-            setSubmitted(true);
-        }, 1000);
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    _subject: `New Lead: ${formData.serviceType} from ${formData.name}`,
+                    _template: "table"
+                }),
+            });
+
+            if (response.ok) {
+                setSubmitted(true);
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            alert("There was an error sending your message. Please try again or contact us directly at contact@cleanshinepro.com");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

@@ -82,12 +82,31 @@ const BookingPage = () => {
         e.preventDefault();
         if (validateStep(4)) {
             setIsSubmitting(true);
-            // Simulate API call
-            setTimeout(() => {
+            try {
+                const response = await fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        ...formData,
+                        _subject: `BOOKING REQUEST: ${formData.serviceType} - ${formData.name}`,
+                        _template: "table",
+                        _captcha: "false"
+                    }),
+                });
+
+                if (response.ok) {
+                    setIsSuccess(true);
+                    window.scrollTo(0, 0);
+                }
+            } catch (error) {
+                console.error("Booking error:", error);
+                alert("Could not process booking. Please contact us at contact@cleanshinepro.com");
+            } finally {
                 setIsSubmitting(false);
-                setIsSuccess(true);
-                window.scrollTo(0, 0);
-            }, 1500);
+            }
         }
     };
 

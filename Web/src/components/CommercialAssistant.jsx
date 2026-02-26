@@ -84,16 +84,31 @@ const CommercialAssistant = () => {
         else handleSubmitForm();
     };
 
-    const handleSubmitForm = () => {
-        setShowForm(false);
+    const handleSubmitForm = async () => {
         setIsTyping(true);
-        setTimeout(() => {
+        try {
+            await fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    _subject: `AI ASSISTANT LEAD: ${formData.type} - ${formData.name}`,
+                    _template: "table"
+                }),
+            });
+
             setMessages(prev => [...prev, { type: 'bot', text: `Thanks ${formData.name}! We've received your ${formData.type} request for ${formData.address}. A specialist will contact you at ${formData.contact} shortly!` }]);
+        } catch (error) {
+            setMessages(prev => [...prev, { type: 'bot', text: "I've saved your details but had a small issue sending the notification. Our team will contact you soon!" }]);
+        } finally {
             setIsTyping(false);
-            // Reset form for future use
+            setShowForm(false);
             setFormData({ type: '', address: '', service: '', name: '', contact: '' });
             setFormStep(0);
-        }, 1500);
+        }
     };
 
     return (
