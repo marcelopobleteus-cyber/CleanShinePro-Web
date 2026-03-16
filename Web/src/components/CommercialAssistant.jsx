@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Shield, X, Send, ChevronRight, Check } from 'lucide-react';
 import { getGeminiResponse, getGeminiBookingResponse } from '../services/gemini';
 
-const CommercialAssistant = () => {
+const CommercialAssistant = ({ t }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { type: 'bot', text: "Welcome to CleanShine Pro! I'm Shine, your expert cleaning consultant. Are you looking to transform your office morale or reclaim your home sanctuary today?" }
+        { type: 'bot', text: t?.navHome === 'Home' ? "Welcome to CleanShine Pro! I'm Shine, your expert cleaning consultant. Are you looking to transform your office morale or reclaim your home sanctuary today?" : "¡Bienvenido a CleanShine Pro! Soy Shine, su consultor experto en limpieza. ¿Desea transformar la moral de su oficina o recuperar su santuario hoy?" }
     ]);
     const [quickActions, setQuickActions] = useState([
         "Free Office Quote", "Deep Home Clean", "Airbnb Turnover", "Our Guarantee"
@@ -407,8 +407,8 @@ const CommercialAssistant = () => {
                             <Shield className="w-6 h-6 text-emerald-600 fill-current opacity-80" />
                         </div>
                         <div>
-                            <p className="text-[#020617] text-sm font-bold leading-tight mb-1">Expert Cleaner Online</p>
-                            <p className="text-slate-500 text-xs leading-tight">¡Obtén un descuento en tu primer servicio con un plan <span className="text-emerald-600 font-bold">recurrente</span>! 🎁</p>
+                            <p className="text-[#020617] text-sm font-bold leading-tight mb-1">{t?.navHome === 'Home' ? 'Expert Cleaner Online' : 'Experto en Línea'}</p>
+                            <p className="text-slate-500 text-xs leading-tight">{t?.promo} 🎁</p>
                         </div>
                     </div>
                     {/* Pulsing indicator */}

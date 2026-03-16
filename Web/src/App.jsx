@@ -22,6 +22,30 @@ import { Phone, ArrowRight } from 'lucide-react';
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [bookingData, setBookingData] = useState(null);
+  const [lang, setLang] = useState('en'); // 'en' or 'es'
+
+  const translations = {
+    en: {
+      promo: "Get a discount percentage on your first service by signing up for one of our plans!",
+      navHome: "Home",
+      navAbout: "About",
+      navServices: "Services",
+      navProcess: "Process",
+      navContact: "Contact",
+      btnQuote: "Get Quote"
+    },
+    es: {
+      promo: "Obtén un porcentaje de descuento en tu primer servicio contratando algunos de nuestros planes!",
+      navHome: "Inicio",
+      navAbout: "Nosotros",
+      navServices: "Servicios",
+      navProcess: "Proceso",
+      navContact: "Contacto",
+      btnQuote: "Cotizar"
+    }
+  };
+
+  const t = translations[lang];
 
   const handleNavigate = (page, data = null) => {
     setCurrentPage(page);
@@ -77,7 +101,7 @@ function App() {
       default:
         return (
           <>
-            <Hero onNavigate={handleNavigate} />
+            <Hero onNavigate={handleNavigate} lang={lang} t={t} />
             <TrustBar />
             <Services onNavigate={handleNavigate} />
 
@@ -181,14 +205,30 @@ function App() {
 
           <div className="flex items-center gap-6">
             <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600">
-              <button onClick={() => handleNavigate('home')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'home' ? 'text-emerald-600 font-bold' : ''}`}>Home</button>
-              <button onClick={() => handleNavigate('about')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'about' ? 'text-emerald-600 font-bold' : ''}`}>About</button>
-              <button onClick={() => handleNavigate('services')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'services' ? 'text-emerald-600 font-bold' : ''}`}>Services</button>
-              <button onClick={() => handleNavigate('process')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'process' ? 'text-emerald-600 font-bold' : ''}`}>Process</button>
-              <button onClick={() => handleNavigate('contact')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'contact' ? 'text-emerald-600 font-bold' : ''}`}>Contact</button>
+              <button onClick={() => handleNavigate('home')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'home' ? 'text-emerald-600 font-bold' : ''}`}>{t.navHome}</button>
+              <button onClick={() => handleNavigate('about')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'about' ? 'text-emerald-600 font-bold' : ''}`}>{t.navAbout}</button>
+              <button onClick={() => handleNavigate('services')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'services' ? 'text-emerald-600 font-bold' : ''}`}>{t.navServices}</button>
+              <button onClick={() => handleNavigate('process')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'process' ? 'text-emerald-600 font-bold' : ''}`}>{t.navProcess}</button>
+              <button onClick={() => handleNavigate('contact')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'contact' ? 'text-emerald-600 font-bold' : ''}`}>{t.navContact}</button>
             </div>
+
+            <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
+              <button
+                onClick={() => setLang('en')}
+                className={`text-xs font-bold px-2 py-1 rounded ${lang === 'en' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-600'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang('es')}
+                className={`text-xs font-bold px-2 py-1 rounded ${lang === 'es' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-600'}`}
+              >
+                ES
+              </button>
+            </div>
+
             <button onClick={() => handleNavigate('booking')} className="hidden md:block px-6 py-2.5 bg-[#0A2E5C] hover:bg-[#020617] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg">
-              Get Quote
+              {t.btnQuote}
             </button>
           </div>
         </div>
@@ -198,7 +238,7 @@ function App() {
         {renderPage()}
       </main>
 
-      <CommercialAssistant />
+      <CommercialAssistant lang={lang} t={t} />
       <Footer onNavigate={handleNavigate} />
       <Analytics />
     </div>

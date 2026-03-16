@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Star, Calendar, ShieldCheck, Phone } from 'lucide-react';
 
-const Hero = ({ onNavigate }) => {
+const Hero = ({ onNavigate, t }) => {
   return (
     <section className="relative bg-[#020617] text-white overflow-hidden min-h-[85vh] flex items-center pt-10 pb-16">
 
@@ -21,7 +21,7 @@ const Hero = ({ onNavigate }) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
             </span>
-            <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase">Obtén un porcentaje de descuento en tu primer servicio contratando un plan semanal o bi-semanal!</span>
+            <span className="text-yellow-400 text-xs font-bold tracking-widest uppercase">{t.promo}</span>
           </div>
 
           <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-6 font-heading">
