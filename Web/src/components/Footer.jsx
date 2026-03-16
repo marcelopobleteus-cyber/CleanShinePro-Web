@@ -23,16 +23,27 @@ const Footer = ({ onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Quick Links */}
                     <div>
                         <h4 className="font-bold text-lg mb-6">Company</h4>
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li><button onClick={() => onNavigate('about')} className="hover:text-emerald-400 transition-colors text-left">About Us</button></li>
                             <li><button onClick={() => onNavigate('process')} className="hover:text-emerald-400 transition-colors text-left">Our Process</button></li>
-                            <li><button onClick={() => onNavigate('process')} className="hover:text-emerald-400 transition-colors text-left">Safety Protocols</button></li>
+                            <li><button onClick={() => onNavigate('blog')} className="hover:text-emerald-400 transition-colors text-left font-bold text-emerald-500">Expert Blog</button></li>
                             <li><button onClick={() => onNavigate('contact')} className="hover:text-emerald-400 transition-colors text-left">Careers</button></li>
-                            <li><button onClick={() => onNavigate('service-areas')} className="hover:text-emerald-400 transition-colors text-left">Service Areas</button></li>
+                            <li><button onClick={() => onNavigate('service-areas')} className="hover:text-emerald-400 transition-colors text-left">All Service Areas</button></li>
                             <li><button onClick={() => onNavigate('privacy')} className="hover:text-emerald-400 transition-colors text-left">Privacy Policy</button></li>
+                        </ul>
+                    </div>
+
+                    {/* Service Regions */}
+                    <div>
+                        <h4 className="font-bold text-lg mb-6">Service Localities</h4>
+                        <ul className="space-y-3 text-sm text-slate-400">
+                            <li><button onClick={() => onNavigate('woodstock')} className="hover:text-emerald-400 transition-colors text-left">Woodstock, GA</button></li>
+                            <li><button onClick={() => onNavigate('acworth')} className="hover:text-emerald-400 transition-colors text-left">Acworth, GA</button></li>
+                            <li><button onClick={() => onNavigate('kennesaw')} className="hover:text-emerald-400 transition-colors text-left">Kennesaw, GA</button></li>
+                            <li><button onClick={() => onNavigate('marietta')} className="hover:text-emerald-400 transition-colors text-left">Marietta, GA</button></li>
+                            <li><button onClick={() => onNavigate('contact')} className="hover:text-emerald-400 transition-colors text-left italic">Request New City +</button></li>
                         </ul>
                     </div>
 

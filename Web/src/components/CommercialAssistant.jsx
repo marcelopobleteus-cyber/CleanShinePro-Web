@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Shield, X, Send, ChevronRight, Check } from 'lucide-react';
-import { getGeminiResponse } from '../services/gemini';
+import { getGeminiResponse, getGeminiBookingResponse } from '../services/gemini';
 
 const CommercialAssistant = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -14,11 +14,38 @@ const CommercialAssistant = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [showBubble, setShowBubble] = useState(false);
 
+    const [bookingContext, setBookingContext] = useState(null);
+
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!isOpen) setShowBubble(true);
-        }, 3000);
-        return () => clearTimeout(timer);
+        let bubbleTimer;
+        if (!isOpen) {
+            // bubbleTimer = setTimeout(() => {
+            //     setShowBubble(true);
+            // }, 3000);
+        }
+
+        const handleOpenContext = (e) => {
+            const { context, formData, estimate } = e.detail;
+            setIsOpen(true);
+            setShowBubble(false);
+            if (bubbleTimer) clearTimeout(bubbleTimer);
+            setBookingContext({ formData, estimate });
+
+            setMessages([
+                {
+                    type: 'bot',
+                    text: `I've analyzed your ${formData.sqft} sqft property! The estimate of $${estimate.min} - $${estimate.max} reflects our premium hospital-grade standards. How can I help you finalize? I can show you exactly what's included, estimate the duration, or add extra services like inside the fridge or oven!`
+                }
+            ]);
+            setQuickActions(["What's included?", "How long will it take?", "Add Extra Services", "Our Guarantee"]);
+        };
+
+        window.addEventListener('open-shine-chat', handleOpenContext);
+
+        return () => {
+            if (bubbleTimer) clearTimeout(bubbleTimer);
+            window.removeEventListener('open-shine-chat', handleOpenContext);
+        };
     }, [isOpen]);
 
     // Form State
@@ -50,28 +77,102 @@ const CommercialAssistant = () => {
         setInput('');
         setIsTyping(true);
 
-        try {
-            // Call Gemini AI with History
-            let aiText = await getGeminiResponse(userMsg, messages);
-            let triggerForm = false;
+        // --- LOCAL SALES BRAIN (No API Dependency) ---
+        const salesBrain = {
+            keywords: {
+                inclusions: ['included', 'include', 'incluye', 'que trae', 'ofrecen', 'tareas', 'checklist'],
+                pricing: ['price', 'cost', 'precio', 'cuanto', 'valor', 'rate', 'estimate', 'cotizacion'],
+                duration: ['time', 'long', 'tiempo', 'duracion', 'tarda', 'horas'],
+                extras: ['extra', ' fridge', ' oven', 'nevera', 'horno', 'adicional'],
+                trust: ['trust', 'insurance', 'seguro', 'background', 'safe', 'confianza', 'liability', 'guarantee', 'garantía'],
+                payments: ['pay', 'deposit', 'zelle', 'tarjeta', 'pago', 'depositar', 'transferencia'],
+                location: ['area', 'where', 'donde', 'woodstock', 'atlanta', 'kennesaw', 'city']
+            },
+            responses: {
+                inclusions: (service) => {
+                    let text = `Nuestro servicio de **${service || 'Limpieza'}** es de grado hospitalario e incluye: \n\n`;
+                    if (service?.includes("Standard")) text += "• Aspirado de alta potencia y trapeado con desinfectantes EPA.\n• Desinfección completa de baños (toilete, ducha, espejos).\n• Limpieza de exteriores de electrodomésticos y encimeras de cocina.\n• Limpieza profunda de polvo en todas las superficies.\n• Recogida de basura y tendido de camas.";
+                    else if (service?.includes("Deep")) text += "• **TODO lo del Standard PLUS:**\n• Limpieza detallada de zócalos (baseboards) a mano.\n• Interior de microondas y desengrasado de estufa.\n• Limpieza de rieles de ventanas y marcos de puertas.\n• Fregado de azulejos y eliminación de depósitos de calcio.\n• Limpieza profunda detrás de muebles ligeros.";
+                    else if (service?.includes("Airbnb")) text += "• **Turnover Pro:** Limpieza profunda post-huésped.\n• Lavandería pro (lavado/secado/doblado).\n• Staging de hotel para reseñas 5 estrellas.\n• Reporte de daños inmediato con fotos.\n• Reposición de suministros y desinfección de puntos de alto contacto.";
+                    else if (service?.includes("Medical")) text += "• Esterilización grado hospitalario.\n• Control estricto de contaminación cruzada.\n• Desinfección de salas de espera y consultorios.\n• Documentación de limpieza para cumplimiento normativo.";
+                    else if (service?.includes("Construction")) text += "• Extracción industrial de polvo fino.\n• Remoción de adhesivos, pintura y residuos de cemento.\n• Limpieza interior de gabinetes y cajones.\n• Pulido final de accesorios y tuberías externas.";
+                    else text += "• Desinfección de grado hospitalario.\n• Cuidado experto de suelos y superficies.\n• Protocolos certificados de higiene.";
+                    return text;
+                },
+                pricing: (min, max) => `Nuestra tarifa de **$${min} - $${max}** incluye un margen del 35% que garantiza el uso de supervisores certificados y químicos de grado hospitalario. No somos los más baratos, somos los mejores.`,
+                duration: (hMin, hMax, sqft, service) => {
+                    let ratio = 1200;
+                    if (service?.includes('Medical')) ratio = 1500;
+                    else if (service?.includes('Construction')) ratio = 800;
+                    else if (service?.includes('Office')) ratio = 3500;
 
-            // Check for hidden trigger from AI
-            if (aiText.includes('[[SHOW_FORM]]')) {
-                triggerForm = true;
-                aiText = aiText.replace('[[SHOW_FORM]]', '').trim();
+                    const est = Math.ceil(sqft / ratio);
+                    return `Para su espacio de **${sqft} sqft**, estimamos una ejecución de **${Math.max(2, est)} a ${est + 2} horas**, utilizando un equipo de mínimo 2 profesionales.`;
+                },
+                extras: "Añada valor con nuestros Premium Extras:\n• **Nevera/Horno**: $35 c/u (Sanitizado Profundo)\n• **Gabinetes**: $45 (Interior detallado)\n• **Persianas**: $30 (Cuidado húmedo)",
+                trust: "Limpiamos con confianza: Seguro de **$5M**, garantía de satisfacción 24h y personal 100% verificado. Si no está perfecto, volvemos GRATIS.",
+                payments: "Para confirmar su espacio en la agenda, solicitamos un **depósito profesional del 35%**. Aceptamos Zelle, Tarjeta y Transferencia. ¿Le gustaría los datos de pago?",
+                location: "Estamos basados en **Woodstock**. Para servicios a más de 30 millas, aplicamos un cargo de transporte de $15 + 50% de tiempo de viaje para proteger el salario de nuestro equipo."
+            }
+        };
+
+        const closingPitch = "\n\n**¿Desea asegurar su reserva ahora con el depósito del 35% para bloquear su fecha en nuestro calendario?**";
+
+        // Logic Process
+        setTimeout(async () => {
+            let responseText = "";
+            const msg = userMsg.toLowerCase();
+            const service = bookingContext?.formData?.serviceType;
+            const sqft = parseInt(bookingContext?.formData?.sqft) || 1200;
+            const beds = parseInt(bookingContext?.formData?.beds) || 0;
+            const extrasCount = bookingContext?.formData?.extras?.length || 0;
+
+            if (salesBrain.keywords.inclusions.some(k => msg.includes(k))) responseText = salesBrain.responses.inclusions(service);
+            else if (salesBrain.keywords.duration.some(k => msg.includes(k))) {
+                responseText = salesBrain.responses.duration(0, 0, sqft, service);
+            }
+            else if (salesBrain.keywords.pricing.some(k => msg.includes(k))) {
+                const min = bookingContext?.estimate?.min || "...";
+                const max = bookingContext?.estimate?.max || "...";
+                responseText = salesBrain.responses.pricing(min, max);
+            }
+            else if (salesBrain.keywords.extras.some(k => msg.includes(k))) responseText = salesBrain.responses.extras;
+            else if (salesBrain.keywords.trust.some(k => msg.includes(k))) responseText = salesBrain.responses.trust;
+            else if (salesBrain.keywords.payments.some(k => msg.includes(k))) responseText = salesBrain.responses.payments;
+            else if (salesBrain.keywords.location.some(k => msg.includes(k))) responseText = salesBrain.responses.location;
+
+            if (responseText) {
+                setMessages(prev => [...prev, { type: 'bot', text: responseText + closingPitch }]);
+                setIsTyping(false);
+                return;
             }
 
-            setMessages(prev => [...prev, { type: 'bot', text: aiText }]);
+            // Fallback strategy: If Gemini fails or shows an error, show a custom professional fallback instead
+            try {
+                let aiText;
+                if (bookingContext) {
+                    aiText = await getGeminiBookingResponse(userMsg, bookingContext.formData, messages);
+                } else {
+                    aiText = await getGeminiResponse(userMsg, messages);
+                }
 
-            if (triggerForm) {
-                setShowForm(true);
-                setFormStep(0);
+                // Silencing Technical Errors for the User
+                if (aiText.includes('AI Error') || aiText.includes('Offline')) {
+                    throw new Error("API Limit");
+                }
+
+                if (aiText.includes('[[SHOW_FORM]]')) {
+                    setShowForm(true);
+                    aiText = aiText.replace('[[SHOW_FORM]]', '').trim();
+                }
+
+                setMessages(prev => [...prev, { type: 'bot', text: aiText + (bookingContext ? closingPitch : "") }]);
+            } catch (error) {
+                setMessages(prev => [...prev, { type: 'bot', text: "Entendido. Como experto, mi recomendación es que bloqueemos su fecha ahora mismo con el depósito del 35% para asegurar el mejor equipo disponible. ¿Procedemos con los detalles del pago?" }]);
+            } finally {
+                setIsTyping(false);
             }
-        } catch (error) {
-            setMessages(prev => [...prev, { type: 'bot', text: "I'm having trouble connecting right now. Please try again later." }]);
-        } finally {
-            setIsTyping(false);
-        }
+        }, 600);
     };
 
     const handleFormUpdate = (field, value) => {
@@ -342,7 +443,7 @@ const CommercialAssistant = () => {
             </button>
 
             {/* Global Styles for Animations */}
-            <style jsx>{`
+            <style>{`
                 @keyframes blink {
                     0%, 100% { transform: scaleY(1); }
                     50% { transform: scaleY(0.1); }

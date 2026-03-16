@@ -105,7 +105,10 @@ const Services = ({ onNavigate }) => {
                             </ul>
 
                             <button
-                                onClick={() => onNavigate('booking')}
+                                onClick={() => onNavigate('booking', {
+                                    serviceType: activeTab,
+                                    subService: service
+                                })}
                                 className="w-full py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-sm transition-all duration-300 relative z-10"
                             >
                                 Get a Quote
@@ -117,7 +120,7 @@ const Services = ({ onNavigate }) => {
                 {/* Secondary CTA for Flow */}
                 <div className="mt-16 text-center">
                     <p className="text-slate-500 mb-6 font-medium">Not sure which service you need?</p>
-                    <button onClick={() => onNavigate('contact')} className="px-10 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold rounded-lg transition-all">
+                    <button onClick={() => onNavigate('services')} className="px-10 py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold rounded-lg transition-all">
                         Compare All Services
                     </button>
                 </div>
