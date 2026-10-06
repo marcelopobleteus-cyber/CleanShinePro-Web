@@ -6,6 +6,34 @@ import {
 } from 'lucide-react';
 import { calculateSTREngine, STR_ADDONS } from '../engines/short_term_rental_engine';
 
+// ─── CleaningIQ (Supabase): precio oficial, leads y deposito ─────────────────
+const CLEANINGIQ_ORG_ID = '879e3b3b-e3b0-44e3-947c-fcf4ada8a16e'; // CleanShine Pro
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+async function callCleaningIQ(name, body) {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify(body)
+    });
+    let data = null;
+    try { data = await res.json(); } catch { /* respuesta sin JSON */ }
+    if (!res.ok) throw new Error(data?.error || 'Service temporarily unavailable. Please try again.');
+    return data;
+}
+
+// Datos que el motor de precios necesita (el servidor recalcula; nunca recibe un precio)
+function toQuoteInput(data, strAddons, recurringConversion) {
+    return {
+        mainService: data.mainService, subService: data.subService,
+        sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
+        extras: data.extras, strAddons, basementType: data.basementType, levels: data.levels,
+        quoteMode: data.quoteMode, roomSelection: data.roomSelection,
+        zip: data.zip, address: data.address, distance: data.distance,
+        recurringConversion
+    };
+}
+
 
 const serviceEngines = {
     residential: {
@@ -149,7 +177,9 @@ const serviceEngines = {
 
 
 const BookingPage = () => {
-    const [step, setStep] = useState(1);
+    // Al volver de Stripe Checkout la URL trae ?booking=success o ?booking=cancelled
+    const [paymentReturn] = useState(() => new URLSearchParams(window.location.search).get('booking'));
+    const [step, setStep] = useState(paymentReturn === 'success' ? 7 : 1);
     const [formData, setFormData] = useState({
         mainService: '',
         subService: '',
@@ -181,7 +211,7 @@ const BookingPage = () => {
         }
     });
 
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState(paymentReturn === 'cancelled' ? { general: 'Payment was cancelled. You can request a new quote or contact us.' } : {});
     const [estimatedPrice, setEstimatedPrice] = useState(null);
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -196,7 +226,12 @@ const BookingPage = () => {
     const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [hasCompletedBooking, setHasCompletedBooking] = useState(false);
     const [quoteCount, setQuoteCount] = useState(0);
-    const [isVerifying, setIsVerifying] = useState(false);
+    const [leadId, setLeadId] = useState(null);
+    const [bookingStatus, setBookingStatus] = useState(paymentReturn === 'success' ? 'paid' : null); // 'requested' | 'paid'
+
+    useEffect(() => {
+        if (paymentReturn) window.history.replaceState({}, '', window.location.pathname);
+    }, [paymentReturn]);
     const calculationTimer = useRef(null);
 
 
@@ -423,34 +458,18 @@ const BookingPage = () => {
         if (calculationTimer.current) clearTimeout(calculationTimer.current);
 
         calculationTimer.current = setTimeout(async () => {
-            // 🛡️ SECURITY LAYER: Backend Authority Synchronization
-            const syncBackend = async () => {
-                try {
-                    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-estimate-csp`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            formData: data,
-                            email: data.email,
-                            isEmailVerified: isEmailVerified
-                        })
-                    });
-                    const result = await response.json();
-                    if (result.error) {
-                        setErrors(prev => ({ ...prev, general: result.error }));
-                        return null;
-                    }
-                    return result;
-                } catch (e) {
-                    console.warn("Pricing logic disconnected from backend authority.");
-                    return null;
-                }
-            };
-
-            const serverResult = await syncBackend();
+            // 🛡️ Precio oficial: motor de CleaningIQ (quote-engine). El calculo local de
+            // abajo es el mismo motor y solo se usa si el servidor no responde.
+            const recurringConversion = data.recurringConversionOverride ?? isRecurringConverted;
+            let serverQuote = null;
+            try {
+                serverQuote = await callCleaningIQ('quote-engine', {
+                    ...toQuoteInput(data, data.strAddonsOverride ?? strAddons, recurringConversion),
+                    organization_id: CLEANINGIQ_ORG_ID
+                });
+            } catch (e) {
+                console.warn('quote-engine unavailable, using local engine:', e.message);
+            }
 
             const { mainService, subService, sqft, beds, baths, frequency, extras, basementType, levels, distance, address } = data;
             const isRecurring = frequency !== 'one-time';
@@ -609,7 +628,7 @@ const BookingPage = () => {
             }
 
             const finalPriceBeforeConversion = basePrice + transportFee;
-            const recurringFactor = isRecurringConverted ? 0.88 : 1.0;
+            const recurringFactor = recurringConversion ? 0.88 : 1.0;
             const finalPrice = finalPriceBeforeConversion * recurringFactor;
 
             setDiagnostics({
@@ -635,13 +654,14 @@ const BookingPage = () => {
             });
 
 
+            const officialCrew = serverQuote?.crew_size ?? crewSize;
             setEstimatedPrice({
-                total: Math.ceil(finalPrice),
-                base: Math.ceil(basePrice),
-                transport: transportFee,
-                deposit: Math.ceil(finalPrice * 0.35),
-                duration: `${durationHours.toFixed(1)} Hours`,
-                personnel: crewSize > 1 ? `${crewSize} Pro Cleaners` : "1 Pro Cleaner",
+                total: serverQuote?.total ?? Math.ceil(finalPrice),
+                base: serverQuote?.base ?? Math.ceil(basePrice),
+                transport: serverQuote?.transport ?? transportFee,
+                deposit: serverQuote?.deposit ?? Math.ceil(finalPrice * 0.35),
+                duration: `${(serverQuote?.duration_hours ?? durationHours).toFixed(1)} Hours`,
+                personnel: officialCrew > 1 ? `${officialCrew} Pro Cleaners` : "1 Pro Cleaner",
                 confidence: 98,
                 warning: validationError,
                 travelNote: !user_address_verified ? "Final price before travel fee (calculated after address confirmation)." : null
@@ -649,7 +669,7 @@ const BookingPage = () => {
 
             setIsCalculating(false);
         }, 800); // Reduced delay for better reactivity while maintaining "calculating" feel
-    }, [formData, residential_engine, commercial_engine, airbnb_engine]);
+    }, [formData, residential_engine, commercial_engine, airbnb_engine, isRecurringConverted, strAddons]);
 
 
     const nextStep = () => {
@@ -1051,14 +1071,67 @@ const BookingPage = () => {
         printWindow.document.close();
     };
 
-    const handleDepositClick = (e) => {
+    // Aviso a la oficina (mismo canal que el formulario de contacto)
+    const notifyOffice = (quote) => {
+        fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+                _subject: `New Booking Request: ${formData.name} — ${formData.date} ${formData.time}`,
+                _template: "table",
+                name: formData.name, email: formData.email, phone: formData.phone,
+                address: formData.address, date: formData.date, time: formData.time,
+                service: `${formData.mainService} / ${formData.subService}`,
+                total: `$${quote.total}`, deposit_due: `$${quote.deposit}`
+            })
+        }).catch(err => console.error('Office notification failed:', err));
+    };
+
+    const handleDepositClick = async (e) => {
         e.preventDefault();
         if (!acceptedTerms) return; // Button is already disabled without terms
         if (!validateStep(6)) return;
 
-        // Show inline confirmation (step 7) — no browser alert
-        track_event("deposit_confirmed");
-        setStep(7);
+        setIsSubmitting(true);
+        try {
+            const quoteInput = toQuoteInput(formData, strAddons, isRecurringConverted);
+            let currentLead = leadId;
+            if (!currentLead) {
+                // No desbloqueo el precio en el paso 5: el lead se crea ahora
+                const created = await callCleaningIQ('web-lead', {
+                    action: 'quote', organization_id: CLEANINGIQ_ORG_ID,
+                    contact: { name: formData.name, email: formData.email, phone: formData.phone },
+                    quote_input: quoteInput
+                });
+                currentLead = created.lead_id;
+                setLeadId(currentLead);
+            }
+
+            const result = await callCleaningIQ('web-lead', {
+                action: 'book', organization_id: CLEANINGIQ_ORG_ID, lead_id: currentLead,
+                contact: { email: formData.email },
+                quote_input: quoteInput,
+                schedule: { date: formData.date, time: formData.time },
+                return_url: window.location.origin
+            });
+            setEstimatedPrice(prev => ({ ...prev, total: result.quote.total, base: result.quote.base, transport: result.quote.transport, deposit: result.quote.deposit }));
+
+            if (result.status === 'checkout' && result.checkout_url) {
+                track_event("deposit_checkout_started");
+                window.location.href = result.checkout_url;
+                return;
+            }
+
+            // Sin pago en linea: queda como solicitud y la oficina confirma
+            notifyOffice(result.quote);
+            track_event("booking_requested");
+            setBookingStatus('requested');
+            setStep(7);
+        } catch (err) {
+            setErrors({ general: err.message });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
 
@@ -1356,7 +1429,7 @@ const BookingPage = () => {
                                                                     ${Math.round(estimatedPrice.total * 0.9)} – ${Math.round(estimatedPrice.total * 1.1)}
                                                                 </div>
                                                                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2 italic">
-                                                                    Verify ownership to unlock fixed pricing.
+                                                                    Enter your contact info to unlock your exact price.
                                                                 </p>
                                                             </div>
 
@@ -1377,91 +1450,41 @@ const BookingPage = () => {
                                                                         <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-[#020617] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 outline-none" placeholder="(123) 456-7890" />
                                                                     </div>
 
-                                                                    {isVerifying && (
-                                                                        <div className="space-y-1 animate-in zoom-in duration-300">
-                                                                            <label className="text-[9px] font-black text-emerald-500 uppercase">Enter Verification Code</label>
-                                                                            <input id="verification-code-input" type="text" maxLength="6" className="w-full bg-emerald-500/10 border border-emerald-500 rounded-xl px-4 py-3 text-2xl font-black text-center tracking-[0.5em] text-white focus:outline-none" placeholder="000000" />
-                                                                        </div>
-                                                                    )}
-
                                                                     <button
                                                                         type="button"
                                                                         onClick={async () => {
-                                                                            if (!isVerifying) {
-                                                                                if (!formData.email && !formData.phone) {
-                                                                                    setErrors(prev => ({ ...prev, general: "Email or Phone required for verification" }));
-                                                                                    return;
-                                                                                }
-
-                                                                                setIsCalculating(true);
-                                                                                try {
-                                                                                    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-csp`, {
-                                                                                        method: 'POST',
-                                                                                        headers: {
-                                                                                            'Content-Type': 'application/json',
-                                                                                            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-                                                                                        },
-                                                                                        body: JSON.stringify({ email: formData.email, phone: formData.phone })
-                                                                                    });
-                                                                                    const result = await response.json();
-                                                                                    if (result.success) {
-                                                                                        setIsVerifying(true);
-                                                                                        track_event("identity_verification_sent");
-                                                                                        setErrors(prev => {
-                                                                                            const next = { ...prev };
-                                                                                            delete next.general;
-                                                                                            return {
-                                                                                                ...next,
-                                                                                                verificationNote: result.method === 'email' ? `Check your inbox at ${formData.email}` : `Check your messages at ${formData.phone}`
-                                                                                            };
-                                                                                        });
-                                                                                    } else {
-                                                                                        setErrors(prev => ({ ...prev, general: result.error || "Failed to send code" }));
-                                                                                    }
-                                                                                } catch (e) {
-                                                                                    setErrors(prev => ({ ...prev, general: "Connection error with verification server" }));
-                                                                                } finally {
-                                                                                    setIsCalculating(false);
-                                                                                }
-                                                                            } else {
-                                                                                const codeInput = document.getElementById('verification-code-input')?.value;
-                                                                                if (!codeInput || codeInput.length < 6) {
-                                                                                    setErrors(prev => ({ ...prev, general: "Please enter the 6-digit code" }));
-                                                                                    return;
-                                                                                }
-
-                                                                                setIsCalculating(true);
-                                                                                try {
-                                                                                    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-code-csp`, {
-                                                                                        method: 'POST',
-                                                                                        headers: {
-                                                                                            'Content-Type': 'application/json',
-                                                                                            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-                                                                                        },
-                                                                                        body: JSON.stringify({
-                                                                                            email: formData.email,
-                                                                                            phone: formData.phone,
-                                                                                            code: codeInput
-                                                                                        })
-                                                                                    });
-                                                                                    const result = await response.json();
-                                                                                    if (result.success) {
-                                                                                        setIsEmailVerified(true);
-                                                                                        setErrors({});
-                                                                                        track_event("identity_verification_success");
-                                                                                    } else {
-                                                                                        setErrors(prev => ({ ...prev, general: result.error || "Invalid code" }));
-                                                                                    }
-                                                                                } catch (e) {
-                                                                                    setErrors(prev => ({ ...prev, general: "Verification server unreachable" }));
-                                                                                } finally {
-                                                                                    setIsCalculating(false);
-                                                                                }
+                                                                            if (!formData.name || !formData.email || !formData.phone) {
+                                                                                setErrors(prev => ({ ...prev, general: "Name, email and phone are required" }));
+                                                                                return;
+                                                                            }
+                                                                            setIsCalculating(true);
+                                                                            try {
+                                                                                const result = await callCleaningIQ('web-lead', {
+                                                                                    action: 'quote',
+                                                                                    organization_id: CLEANINGIQ_ORG_ID,
+                                                                                    contact: { name: formData.name, email: formData.email, phone: formData.phone },
+                                                                                    quote_input: toQuoteInput(formData, strAddons, isRecurringConverted)
+                                                                                });
+                                                                                setLeadId(result.lead_id);
+                                                                                setEstimatedPrice(prev => ({
+                                                                                    ...prev,
+                                                                                    total: result.quote.total,
+                                                                                    base: result.quote.base,
+                                                                                    transport: result.quote.transport,
+                                                                                    deposit: result.quote.deposit
+                                                                                }));
+                                                                                setIsEmailVerified(true);
+                                                                                setErrors({});
+                                                                                track_event("lead_captured");
+                                                                            } catch (e) {
+                                                                                setErrors(prev => ({ ...prev, general: e.message }));
+                                                                            } finally {
+                                                                                setIsCalculating(false);
                                                                             }
                                                                         }}
-                                                                        className="w-full py-4 bg-emerald-500 text-[#020617] font-black rounded-xl uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.3)] active:scale-95 transition-all text-sm mb-4"
+                                                                        className="w-full py-4 bg-emerald-500 text-[#020617] font-black rounded-xl uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:bg-emerald-400 transition-all"
                                                                     >
-                                                                        {isVerifying ? "Confirm Verification Code" : "Verify Identity to Unlock Fixed Price"}
+                                                                        Unlock My Exact Price
                                                                     </button>
                                                                     {errors.general && (
                                                                         <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl mb-4 text-center">
@@ -1471,7 +1494,7 @@ const BookingPage = () => {
                                                                     {errors.verificationNote && (
                                                                         <p className="text-[10px] text-emerald-400 text-center font-bold animate-pulse mt-2">{errors.verificationNote}</p>
                                                                     )}
-                                                                    <p className="text-[8px] text-slate-500 text-center uppercase tracking-tighter">🔒 Secure identity verification required (Sent via {formData.email ? "Email" : "SMS"}) before revealing labor formulas.</p>
+                                                                    <p className="text-[8px] text-slate-500 text-center uppercase tracking-tighter">🔒 We only use your info for this quote. No spam.</p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1481,9 +1504,9 @@ const BookingPage = () => {
                                                         <div className="p-8 bg-indigo-500/5 border border-indigo-500/20 rounded-3xl space-y-4">
                                                             <div className="flex items-center gap-3 text-indigo-400">
                                                                 <ShieldCheck className="w-6 h-6" />
-                                                                <h4 className="font-black uppercase tracking-widest text-sm">Security Layer Locked</h4>
+                                                                <h4 className="font-black uppercase tracking-widest text-sm">Your Exact Price Is One Step Away</h4>
                                                             </div>
-                                                            <p className="text-xs text-slate-400 leading-relaxed">To protect our proprietary labor-projected pricing model and prevent automated scraping, we require identity verification.</p>
+                                                            <p className="text-xs text-slate-400 leading-relaxed">Share your contact info to see your exact, guaranteed price. We save your quote so our team can help you book.</p>
                                                             <ul className="space-y-3">
                                                                 {["Unlock Detailed Breakdown", "View Crew Size Allocation", "Reveal Arrival Timelines", "Access Fixed Price Guarantee"].map((item, i) => (
                                                                     <li key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
@@ -1764,7 +1787,7 @@ const BookingPage = () => {
                                                             setIsRecurringConverted(true);
                                                             const nextState = { ...formData, frequency: 'biweekly' };
                                                             setFormData(nextState);
-                                                            calculateAdvancedEstimate(nextState);
+                                                            calculateAdvancedEstimate({ ...nextState, recurringConversionOverride: true });
                                                         }}
                                                         className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
                                                     >
@@ -1804,11 +1827,14 @@ const BookingPage = () => {
 
                                             <button
                                                 onClick={handleDepositClick}
-                                                disabled={!acceptedTerms}
+                                                disabled={!acceptedTerms || isSubmitting}
                                                 className={`w-full py-5 rounded-3xl font-black text-lg transition-all flex items-center justify-center gap-3 active:scale-95 ${acceptedTerms ? 'bg-emerald-500 hover:bg-emerald-400 text-[#020617] shadow-[0_10px_30px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-slate-500 cursor-not-allowed'}`}
                                             >
-                                                {`Confirm & Lock Crew — $${estimatedPrice?.deposit} Deposit`}
+                                                {isSubmitting ? 'Processing...' : `Confirm & Lock Crew — $${estimatedPrice?.deposit} Deposit`}
                                             </button>
+                                            {errors.general && (
+                                                <p className="text-[11px] font-bold text-red-400 text-center">{errors.general}</p>
+                                            )}
 
                                             <div className="pt-4 flex flex-col items-center gap-2">
                                                 <div className="flex items-center gap-2 text-[10px] font-black text-emerald-500 uppercase">
@@ -1831,11 +1857,14 @@ const BookingPage = () => {
                                         <Check className="w-12 h-12 text-white stroke-[4]" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h2 className="text-5xl font-black text-white tracking-tighter italic">✅ Booking Confirmed!</h2>
-                                        <p className="text-slate-400 text-lg">We've locked your professional crew for Woodstock, GA.</p>
+                                        <h2 className="text-5xl font-black text-white tracking-tighter italic">{bookingStatus === 'paid' ? '✅ Booking Confirmed!' : '✅ Booking Request Received!'}</h2>
+                                        <p className="text-slate-400 text-lg">{bookingStatus === 'paid'
+                                            ? "Your deposit was received. We've reserved your professional crew."
+                                            : "Our team will contact you within 1 business day to confirm your crew and collect the deposit."}</p>
                                     </div>
                                 </div>
 
+                                {estimatedPrice && (
                                 <div className="max-w-xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
                                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                                         <div className="text-[10px] text-slate-500 font-black uppercase mb-1">Service Date</div>
@@ -1846,7 +1875,7 @@ const BookingPage = () => {
                                         <div className="text-sm font-bold text-white">{estimatedPrice?.personnel}</div>
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                        <div className="text-[10px] text-slate-500 font-black uppercase mb-1">Deposit Paid</div>
+                                        <div className="text-[10px] text-slate-500 font-black uppercase mb-1">{bookingStatus === 'paid' ? 'Deposit Paid' : 'Deposit Due'}</div>
                                         <div className="text-sm font-bold text-emerald-400 font-mono">${estimatedPrice?.deposit}</div>
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
@@ -1854,12 +1883,15 @@ const BookingPage = () => {
                                         <div className="text-sm font-bold text-white font-mono">${estimatedPrice?.total - estimatedPrice?.deposit}</div>
                                     </div>
                                 </div>
+                                )}
 
                                 <div className="bg-[#020617] border border-white/10 rounded-[2.5rem] p-8 max-w-lg mx-auto space-y-6 relative overflow-hidden shadow-2xl">
                                     <div className="relative z-10 space-y-4 text-center">
-                                        <h4 className="text-sm font-black text-emerald-400 uppercase tracking-[0.3em]">Deployment Success</h4>
+                                        <h4 className="text-sm font-black text-emerald-400 uppercase tracking-[0.3em]">{bookingStatus === 'paid' ? 'Payment Received' : 'Request Saved'}</h4>
                                         <p className="text-sm text-slate-300 leading-relaxed">
-                                            A full confirmation with your service checklist and team arrival window has been sent to **{formData.email}**.
+                                            {bookingStatus === 'paid'
+                                                ? 'Stripe sent your payment receipt by email. Our team will contact you to confirm your arrival window.'
+                                                : <>We saved your request. A team member will contact you at <strong>{formData.email}</strong> or by phone to confirm.</>}
                                         </p>
                                         <div className="pt-4 flex justify-center gap-4">
                                             <button onClick={handlePrintReceipt} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">Print Receipt</button>

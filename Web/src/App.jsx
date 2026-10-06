@@ -20,7 +20,8 @@ import FAQ from './components/FAQ';
 import { Phone, ArrowRight } from 'lucide-react';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  // Al volver de Stripe Checkout (?booking=...) se abre directamente la reserva
+  const [currentPage, setCurrentPage] = useState(() => new URLSearchParams(window.location.search).get('booking') ? 'booking' : 'home');
   const [bookingData, setBookingData] = useState(null);
   const [lang, setLang] = useState('en'); // 'en' or 'es'
 
