@@ -17,6 +17,7 @@ import BlogPage from './pages/BlogPage';
 import LocalServicePage from './pages/LocalServicePage';
 import CommercialAssistant from './components/CommercialAssistant';
 import FAQ from './components/FAQ';
+import { BUSINESS_PHONE } from './config';
 import { Phone, ArrowRight } from 'lucide-react';
 
 // Chat SHINE oculto: su llave de Gemini no esta configurada y respondia "offline (Config Error)".
@@ -188,14 +189,17 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#020617]">
       {/* Sticky Mobile Call Button */}
-      <div className="md:hidden fixed bottom-6 right-6 z-[60]">
-        <a
-          href="tel:+1234567890"
-          className="flex items-center justify-center w-14 h-14 bg-emerald-500 text-white rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-bounce"
-        >
-          <Phone className="w-6 h-6" />
-        </a>
-      </div>
+      {BUSINESS_PHONE && (
+        <div className="md:hidden fixed bottom-6 right-6 z-[60]">
+          <a
+            href={`tel:${BUSINESS_PHONE}`}
+            aria-label="Call CleanShine Pro"
+            className="flex items-center justify-center w-14 h-14 bg-emerald-500 text-white rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-bounce"
+          >
+            <Phone className="w-6 h-6" />
+          </a>
+        </div>
+      )}
       {/* Navigation - White Strip */}
       <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 py-4 shadow-sm transition-all duration-300">
         <div className="container mx-auto px-6 flex justify-between items-center">
