@@ -221,11 +221,10 @@ const BookingPage = () => {
     const [strAddons, setStrAddons] = useState([]); // STR-specific add-ons
     const [timeLeft, setTimeLeft] = useState(7200);
     const [isRecurringConverted, setIsRecurringConverted] = useState(false);
-    const [isPaid, setIsPaid] = useState(false);
     const [quoteId] = useState(`CSP-${Math.floor(Date.now() / 1000).toString().slice(-6)}`);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
-    const [hasCompletedBooking, setHasCompletedBooking] = useState(false);
+    const [hasCompletedBooking] = useState(false);
     const [quoteCount, setQuoteCount] = useState(0);
     const [leadId, setLeadId] = useState(null);
     const [bookingStatus, setBookingStatus] = useState(paymentReturn === 'success' ? 'paid' : null); // 'requested' | 'paid'
@@ -705,7 +704,7 @@ const BookingPage = () => {
         // Build area-based line items if applicable
         const areaLines = (formData.quoteMode === 'AREAS' && formData.mainService === 'residential')
             ? Object.entries(formData.roomSelection)
-                .filter(([_, count]) => count > 0)
+                .filter(([, count]) => count > 0)
                 .map(([id, count]) => {
                     const roomLabels = {
                         kitchen: 'Kitchen Detail', fullBath: 'Full Bath Sanitize',

@@ -25,7 +25,7 @@ const CommercialAssistant = ({ t }) => {
         }
 
         const handleOpenContext = (e) => {
-            const { context, formData, estimate } = e.detail;
+            const { formData, estimate } = e.detail;
             setIsOpen(true);
             setShowBubble(false);
             if (bubbleTimer) clearTimeout(bubbleTimer);
@@ -124,8 +124,6 @@ const CommercialAssistant = ({ t }) => {
             const msg = userMsg.toLowerCase();
             const service = bookingContext?.formData?.serviceType;
             const sqft = parseInt(bookingContext?.formData?.sqft) || 1200;
-            const beds = parseInt(bookingContext?.formData?.beds) || 0;
-            const extrasCount = bookingContext?.formData?.extras?.length || 0;
 
             if (salesBrain.keywords.inclusions.some(k => msg.includes(k))) responseText = salesBrain.responses.inclusions(service);
             else if (salesBrain.keywords.duration.some(k => msg.includes(k))) {
@@ -167,7 +165,7 @@ const CommercialAssistant = ({ t }) => {
                 }
 
                 setMessages(prev => [...prev, { type: 'bot', text: aiText + (bookingContext ? closingPitch : "") }]);
-            } catch (error) {
+            } catch {
                 setMessages(prev => [...prev, { type: 'bot', text: "Entendido. Como experto, mi recomendación es que bloqueemos su fecha ahora mismo con el depósito del 35% para asegurar el mejor equipo disponible. ¿Procedemos con los detalles del pago?" }]);
             } finally {
                 setIsTyping(false);
@@ -202,7 +200,7 @@ const CommercialAssistant = ({ t }) => {
             });
 
             setMessages(prev => [...prev, { type: 'bot', text: `Thanks ${formData.name}! We've received your ${formData.type} request for ${formData.address}. A specialist will contact you at ${formData.contact} shortly!` }]);
-        } catch (error) {
+        } catch {
             setMessages(prev => [...prev, { type: 'bot', text: "I've saved your details but had a small issue sending the notification. Our team will contact you soon!" }]);
         } finally {
             setIsTyping(false);

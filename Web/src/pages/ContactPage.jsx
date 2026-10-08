@@ -193,9 +193,10 @@ const ContactPage = () => {
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 group"
+                                    disabled={isSubmitting}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-60"
                                 >
-                                    Send Request
+                                    {isSubmitting ? 'Sending...' : 'Send Request'}
                                     <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
