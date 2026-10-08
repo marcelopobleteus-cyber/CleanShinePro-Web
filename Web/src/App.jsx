@@ -19,6 +19,10 @@ import CommercialAssistant from './components/CommercialAssistant';
 import FAQ from './components/FAQ';
 import { Phone, ArrowRight } from 'lucide-react';
 
+// Chat SHINE oculto: su llave de Gemini no esta configurada y respondia "offline (Config Error)".
+// Se reactiva cuando pase por una funcion del servidor (la llave no puede ir en el navegador).
+const SHOW_ASSISTANT = false;
+
 function App() {
   // Al volver de Stripe Checkout (?booking=...) se abre directamente la reserva
   const [currentPage, setCurrentPage] = useState(() => new URLSearchParams(window.location.search).get('booking') ? 'booking' : 'home');
@@ -239,7 +243,7 @@ function App() {
         {renderPage()}
       </main>
 
-      <CommercialAssistant lang={lang} t={t} />
+      {SHOW_ASSISTANT && <CommercialAssistant lang={lang} t={t} />}
       <Footer onNavigate={handleNavigate} />
       <Analytics />
     </div>
