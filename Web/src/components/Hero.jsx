@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowRight, Star, Calendar, ShieldCheck, Phone } from 'lucide-react';
+import { ArrowRight, Star, Calendar, ShieldCheck, Phone, Mail } from 'lucide-react';
+import { BUSINESS_PHONE } from '../config';
 
 const Hero = ({ onNavigate, t }) => {
   return (
@@ -42,9 +43,15 @@ const Hero = ({ onNavigate, t }) => {
                 Get a Free Quote <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </span>
             </button>
-            <button onClick={() => window.location.href = 'tel:+1234567890'} className="px-8 py-4 bg-transparent border border-white/20 hover:bg-white/10 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
-              <Phone className="w-5 h-5" /> Call Now
-            </button>
+            {BUSINESS_PHONE ? (
+              <a href={`tel:${BUSINESS_PHONE}`} className="px-8 py-4 bg-transparent border border-white/20 hover:bg-white/10 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                <Phone className="w-5 h-5" /> Call Now
+              </a>
+            ) : (
+              <button onClick={() => onNavigate('contact')} className="px-8 py-4 bg-transparent border border-white/20 hover:bg-white/10 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                <Mail className="w-5 h-5" /> Contact Us
+              </button>
+            )}
           </div>
         </div>
 

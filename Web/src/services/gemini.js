@@ -140,7 +140,7 @@ CURRENT BOOKING DATA:
         }
 
         return data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm here to help you finalize your booking. Any questions about the estimate?";
-    } catch (error) {
+    } catch {
         return "I'm having a slight connection issue, but your estimate is ready! Let's proceed to the final step.";
     }
 };

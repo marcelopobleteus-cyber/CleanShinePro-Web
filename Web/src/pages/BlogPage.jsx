@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen, Clock, ArrowRight, User, Sparkles, MapPin } from 'lucide-react';
 
-const BlogPage = ({ onNavigate }) => {
+const BlogPage = () => {
     const posts = [
         {
             id: 1,

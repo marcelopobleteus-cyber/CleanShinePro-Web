@@ -213,6 +213,7 @@ const BookingPage = () => {
 
     const [errors, setErrors] = useState(paymentReturn === 'cancelled' ? { general: 'Payment was cancelled. You can request a new quote or contact us.' } : {});
     const [estimatedPrice, setEstimatedPrice] = useState(null);
+    const [priceError, setPriceError] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [subServiceInfo, setSubServiceInfo] = useState(null);
@@ -220,11 +221,10 @@ const BookingPage = () => {
     const [strAddons, setStrAddons] = useState([]); // STR-specific add-ons
     const [timeLeft, setTimeLeft] = useState(7200);
     const [isRecurringConverted, setIsRecurringConverted] = useState(false);
-    const [isPaid, setIsPaid] = useState(false);
     const [quoteId] = useState(`CSP-${Math.floor(Date.now() / 1000).toString().slice(-6)}`);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
-    const [hasCompletedBooking, setHasCompletedBooking] = useState(false);
+    const [hasCompletedBooking] = useState(false);
     const [quoteCount, setQuoteCount] = useState(0);
     const [leadId, setLeadId] = useState(null);
     const [bookingStatus, setBookingStatus] = useState(paymentReturn === 'success' ? 'paid' : null); // 'requested' | 'paid'
@@ -458,8 +458,8 @@ const BookingPage = () => {
         if (calculationTimer.current) clearTimeout(calculationTimer.current);
 
         calculationTimer.current = setTimeout(async () => {
-            // 🛡️ Precio oficial: motor de CleaningIQ (quote-engine). El calculo local de
-            // abajo es el mismo motor y solo se usa si el servidor no responde.
+            // 🛡️ Precio oficial: motor de CleaningIQ (quote-engine), con los precios de la empresa.
+            // Sin respuesta del servidor no se muestra precio: la copia local puede no coincidir.
             const recurringConversion = data.recurringConversionOverride ?? isRecurringConverted;
             let serverQuote = null;
             try {
@@ -468,8 +468,13 @@ const BookingPage = () => {
                     organization_id: CLEANINGIQ_ORG_ID
                 });
             } catch (e) {
-                console.warn('quote-engine unavailable, using local engine:', e.message);
+                console.warn('quote-engine unavailable:', e.message);
+                setEstimatedPrice(null);
+                setPriceError(e.message || "We couldn't calculate your price right now. Please try again.");
+                setIsCalculating(false);
+                return;
             }
+            setPriceError('');
 
             const { mainService, subService, sqft, beds, baths, frequency, extras, basementType, levels, distance, address } = data;
             const isRecurring = frequency !== 'one-time';
@@ -654,13 +659,13 @@ const BookingPage = () => {
             });
 
 
-            const officialCrew = serverQuote?.crew_size ?? crewSize;
+            const officialCrew = serverQuote.crew_size ?? crewSize;
             setEstimatedPrice({
-                total: serverQuote?.total ?? Math.ceil(finalPrice),
-                base: serverQuote?.base ?? Math.ceil(basePrice),
-                transport: serverQuote?.transport ?? transportFee,
-                deposit: serverQuote?.deposit ?? Math.ceil(finalPrice * 0.35),
-                duration: `${(serverQuote?.duration_hours ?? durationHours).toFixed(1)} Hours`,
+                total: serverQuote.total,
+                base: serverQuote.base,
+                transport: serverQuote.transport,
+                deposit: serverQuote.deposit,
+                duration: `${(serverQuote.duration_hours ?? durationHours).toFixed(1)} Hours`,
                 personnel: officialCrew > 1 ? `${officialCrew} Pro Cleaners` : "1 Pro Cleaner",
                 confidence: 98,
                 warning: validationError,
@@ -699,7 +704,7 @@ const BookingPage = () => {
         // Build area-based line items if applicable
         const areaLines = (formData.quoteMode === 'AREAS' && formData.mainService === 'residential')
             ? Object.entries(formData.roomSelection)
-                .filter(([_, count]) => count > 0)
+                .filter(([, count]) => count > 0)
                 .map(([id, count]) => {
                     const roomLabels = {
                         kitchen: 'Kitchen Detail', fullBath: 'Full Bath Sanitize',
@@ -1408,6 +1413,15 @@ const BookingPage = () => {
                         {step === 5 && (
 
                             <div className="space-y-10 animate-in fade-in zoom-in-95 duration-700">
+                                {!isCalculating && priceError && (
+                                    <div className="p-6 bg-red-500/10 border border-red-500/30 rounded-3xl">
+                                        <p className="text-sm font-black text-red-400 uppercase tracking-widest leading-relaxed">{priceError}</p>
+                                        <div className="mt-4 flex flex-wrap gap-6">
+                                            <button onClick={() => calculateAdvancedEstimate()} className="text-[10px] font-black text-white underline uppercase tracking-widest">Try Again</button>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Or email contact@cleanshinepro.com</span>
+                                        </div>
+                                    </div>
+                                )}
                                 {isCalculating ? (
                                     <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
                                         <div className="w-20 h-20 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
@@ -1914,7 +1928,7 @@ const BookingPage = () => {
 
                             <button
                                 onClick={step === 6 ? handleDepositClick : nextStep}
-                                disabled={isSubmitting || isCalculating}
+                                disabled={isSubmitting || isCalculating || (step === 5 && !estimatedPrice)}
                                 className={`flex items-center gap-3 px-10 py-4 rounded-2xl font-black transition-all ${step === 6 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-white text-[#020617] hover:bg-emerald-400'} shadow-lg disabled:opacity-30 uppercase text-sm tracking-widest`}
                             >
                                 {isSubmitting ? 'PROCESSING...' : step === 5 ? 'LOCK QUOTE & CONTINUE' : step === 6 ? 'CONFIRM BOOKING' : 'NEXT STEP'} <ChevronRight className="w-5 h-5" />
