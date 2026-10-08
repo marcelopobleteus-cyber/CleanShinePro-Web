@@ -5,22 +5,7 @@ import {
     ShieldCheck, FileText, Lock, Zap, Layers
 } from 'lucide-react';
 import { calculateSTREngine, STR_ADDONS } from '../engines/short_term_rental_engine';
-
-// ─── CleaningIQ (Supabase): precio oficial, leads y deposito ─────────────────
-const CLEANINGIQ_ORG_ID = '879e3b3b-e3b0-44e3-947c-fcf4ada8a16e'; // CleanShine Pro
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-async function callCleaningIQ(name, body) {
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
-        body: JSON.stringify(body)
-    });
-    let data = null;
-    try { data = await res.json(); } catch { /* respuesta sin JSON */ }
-    if (!res.ok) throw new Error(data?.error || 'Service temporarily unavailable. Please try again.');
-    return data;
-}
+import { CLEANINGIQ_ORG_ID, callCleaningIQ } from '../services/cleaningiq';
 
 // Datos que el motor de precios necesita (el servidor recalcula; nunca recibe un precio)
 function toQuoteInput(data, strAddons, recurringConversion) {

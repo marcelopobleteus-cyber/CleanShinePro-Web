@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, MapPin, Mail, CheckCircle, ArrowRight } from 'lucide-react';
+import { CLEANINGIQ_ORG_ID, callCleaningIQ } from '../services/cleaningiq';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
@@ -19,8 +20,16 @@ const ContactPage = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        try {
-            const response = await fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
+        // El mensaje entra a CleaningIQ como lead (Leads) y ademas llega por correo a la oficina
+        const [lead, email] = await Promise.allSettled([
+            callCleaningIQ('web-lead', {
+                action: 'contact',
+                organization_id: CLEANINGIQ_ORG_ID,
+                contact: { name: formData.name, email: formData.email },
+                service_interest: formData.serviceType,
+                message: formData.message,
+            }),
+            fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -31,17 +40,18 @@ const ContactPage = () => {
                     _subject: `New Lead: ${formData.serviceType} from ${formData.name}`,
                     _template: "table"
                 }),
-            });
+            }).then(res => { if (!res.ok) throw new Error('formsubmit'); }),
+        ]);
 
-            if (response.ok) {
-                setSubmitted(true);
-            }
-        } catch (error) {
-            console.error("Submission error:", error);
+        if (lead.status === 'rejected') console.error('CleaningIQ lead error:', lead.reason);
+        if (email.status === 'rejected') console.error('Email notification error:', email.reason);
+
+        if (lead.status === 'fulfilled' || email.status === 'fulfilled') {
+            setSubmitted(true);
+        } else {
             alert("There was an error sending your message. Please try again or contact us directly at contact@cleanshinepro.com");
-        } finally {
-            setIsSubmitting(false);
         }
+        setIsSubmitting(false);
     };
 
     return (
