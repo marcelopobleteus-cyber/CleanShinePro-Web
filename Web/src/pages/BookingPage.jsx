@@ -4,18 +4,28 @@ import {
     Home, Building2, Sparkles, MapPin, User, BarChart3, Bot, Shield, ListChecks, Package,
     ShieldCheck, FileText, Lock, Zap, Layers
 } from 'lucide-react';
-import { calculateSTREngine, STR_ADDONS } from '../engines/short_term_rental_engine';
-import { CLEANINGIQ_ORG_ID, callCleaningIQ } from '../services/cleaningiq';
+import { CLEANINGIQ_ORG_ID, callCleaningIQ, getAddons } from '../services/cleaningiq';
 
-// Datos que el motor de precios necesita (el servidor recalcula; nunca recibe un precio)
-function toQuoteInput(data, strAddons, recurringConversion) {
+// Datos que el motor de precios de CleaningIQ necesita (el servidor calcula; nunca recibe un precio).
+// Es el mismo motor que usan el panel de CleaningIQ y su cotizador: un solo precio en todas partes.
+function toQuoteInput(data, recurringConversion) {
     return {
         mainService: data.mainService, subService: data.subService,
         sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
-        extras: data.extras, strAddons, basementType: data.basementType, levels: data.levels,
+        extras: data.extras, basementType: data.basementType, levels: data.levels,
         quoteMode: data.quoteMode, roomSelection: data.roomSelection,
-        zip: data.zip, address: data.address, distance: data.distance,
+        zip: data.zip, address: data.address || undefined,
         recurringConversion
+    };
+}
+
+// Respuesta del motor -> lo que muestra la pagina
+function fromServer(q) {
+    return {
+        total: q.total, range_low: q.range_low, range_high: q.range_high, precision: q.precision,
+        base: q.main_price ?? q.base, addons: q.addons || [], tax: q.tax || 0, deposit: q.deposit,
+        duration: Number(q.duration_hours || 0).toFixed(1),
+        personnel: q.crew_size > 1 ? `${q.crew_size} Pro Cleaners` : '1 Pro Cleaner',
     };
 }
 
@@ -180,7 +190,6 @@ const BookingPage = () => {
         address: '',
         city: 'Woodstock',
         zip: '',
-        distance: '0',
         basementType: 'none',
         levels: 1,
         extras: [],
@@ -202,8 +211,7 @@ const BookingPage = () => {
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [subServiceInfo, setSubServiceInfo] = useState(null);
-    const [diagnostics, setDiagnostics] = useState(null);
-    const [strAddons, setStrAddons] = useState([]); // STR-specific add-ons
+    const [catalogAddons, setCatalogAddons] = useState([]); // extras de la empresa (Add-ons de CleaningIQ)
     const [timeLeft, setTimeLeft] = useState(7200);
     const [isRecurringConverted, setIsRecurringConverted] = useState(false);
     const [quoteId] = useState(`CSP-${Math.floor(Date.now() / 1000).toString().slice(-6)}`);
@@ -218,6 +226,29 @@ const BookingPage = () => {
         if (paymentReturn) window.history.replaceState({}, '', window.location.pathname);
     }, [paymentReturn]);
     const calculationTimer = useRef(null);
+
+    useEffect(() => {
+        getAddons().then(setCatalogAddons).catch(() => setCatalogAddons([]));
+    }, []);
+    // Datos de la casa desde registros publicos (CleaningIQ property-lookup): se completan y la persona confirma
+    const [homeLookup, setHomeLookup] = useState(null);
+    const findHome = async () => {
+        const street = (formData.address || '').trim();
+        if (street.length < 5 || !/^\d{5}$/.test(formData.zip || '')) return;
+        const key = `${street.toLowerCase()}|${formData.zip}`;
+        if (homeLookup?.key === key) return;
+        setHomeLookup({ key, status: 'loading' });
+        try {
+            const d = await callCleaningIQ('property-lookup', { street, zip: formData.zip });
+            const beds = d.bedrooms != null ? String(Math.min(Math.max(Math.round(d.bedrooms), 1), 6)) : null;
+            const baths = d.bathrooms != null ? String(Math.min(Math.max(Math.round(d.bathrooms * 2) / 2, 1), 5)) : null;
+            setFormData(prev => ({ ...prev, sqft: d.sqft ? String(d.sqft) : prev.sqft, beds: beds ?? prev.beds, baths: baths ?? prev.baths }));
+            setHomeLookup({ key, status: 'found', summary: [d.sqft && `${Number(d.sqft).toLocaleString('en-US')} sq ft`, d.bedrooms != null && `${d.bedrooms} bedrooms`, d.bathrooms != null && `${d.bathrooms} bathrooms`].filter(Boolean).join(' · ') });
+        } catch {
+            setHomeLookup({ key, status: 'none' });
+        }
+    };
+    const addonChoices = catalogAddons.filter(a => !a.applies_to?.length || a.applies_to.includes(formData.mainService));
 
 
 
@@ -274,6 +305,7 @@ const BookingPage = () => {
             if (!formData.subService) { newErrors.subService = "Please select a specialization"; isValid = false; }
         }
         if (currentStep === 3) {
+            if (!/^\d{5}$/.test(formData.zip || '')) { newErrors.zip = "5-digit ZIP code required"; isValid = false; }
             if (formData.quoteMode === 'AREAS' && formData.mainService === 'residential') {
                 const roomCount = Object.values(formData.roomSelection).reduce((a, b) => a + b, 0);
                 if (roomCount === 0) {
@@ -303,139 +335,6 @@ const BookingPage = () => {
         return isValid;
     };
 
-    const residential_engine = (config) => {
-        const { sqft, beds, baths, subType, isRecurring, extras = [], basementType = 'none', quoteMode = 'SQFT', roomSelection = {} } = config;
-
-        // Hour-Based Add-On Engine (Mapped for UI compatibility)
-        const addOnLaborMap = {
-            oven: 0.6,
-            fridge: 0.5,
-            cabinets: 0.8,
-            blinds: 1.2,
-            windows: 1.5,
-            pet_light: 0.3,
-            pet_heavy: 0.8,
-            laundry: 0.7,
-            organizing: 0.5,
-            sofa: 0.8
-        };
-
-        const addOnEquipmentCost = {
-            sofa: 15,
-            carpet: 20
-        };
-
-        let addonHours = 0;
-        let equipmentFees = 0;
-        let matsMultiplier = 1.0;
-
-        extras.forEach(id => {
-            if (addOnLaborMap[id]) addonHours += addOnLaborMap[id];
-            if (addOnEquipmentCost[id]) equipmentFees += addOnEquipmentCost[id];
-            if (id === 'pet_heavy') matsMultiplier = 1.03;
-        });
-
-        // PRE-CALCULATE SQFT HOURS FOR CEILING CROSS-VALIDATION
-        let prod = 190;
-        if (subType === 'deep') prod = 140;
-        else if (subType === 'move_out') prod = 145;
-        else if (subType === 'construction') prod = 110;
-        else if (isRecurring) prod = 220;
-
-        const bedroom_factor = 0.10;
-        const bathroom_factor = 0.30;
-        const baseH_sqft = (parseFloat(sqft) || 1000) / prod;
-        const sqftHoursThreshold = baseH_sqft + (beds * bedroom_factor) + (baths * bathroom_factor) + addonHours;
-
-        let totalH = 0;
-        let baseLaborHours = 0;
-        let engineName = 'Residential Engine (SqFt Model)';
-
-        if (quoteMode === 'AREAS') {
-            engineName = 'Residential Engine (Area-Based Model)';
-            const roomTimes = {
-                kitchen: subType === 'deep' ? 1.5 : 0.8,
-                fullBath: subType === 'deep' ? 1.0 : 0.6,
-                halfBath: subType === 'deep' ? 0.5 : 0.3,
-                living: subType === 'deep' ? 0.8 : 0.6,
-                bed: subType === 'deep' ? 0.6 : 0.3,
-                office: subType === 'deep' ? 0.6 : 0.3,
-                stairs: subType === 'deep' ? 0.3 : 0.2
-            };
-
-            let roomHours = 0;
-            Object.keys(roomSelection).forEach(room => {
-                roomHours += (roomSelection[room] || 0) * (roomTimes[room] || 0);
-            });
-
-            const setupFee = 0.5;
-            baseLaborHours = roomHours + setupFee + addonHours;
-
-            // RULE C: Minimum Protection (2.5h)
-            if (baseLaborHours < 2.5) baseLaborHours = 2.5;
-
-            // RULE D: Cross-Validation (SqFt Ceiling)
-            if (baseLaborHours > sqftHoursThreshold) {
-                baseLaborHours = sqftHoursThreshold;
-            }
-
-            totalH = baseLaborHours;
-        } else {
-            totalH = sqftHoursThreshold;
-
-            // Basement Structural Modifier
-            if (basementType === 'finished') {
-                totalH *= 1.05;
-            } else if (basementType === 'unfinished') {
-                totalH *= 1.02;
-            }
-            baseLaborHours = totalH;
-        }
-
-        // STRATEGIC MARGIN ADJUSTMENT v2
-        let margin = 0.23; // Default One-Time (Deep, Standard, Move-Out)
-
-        if (isRecurring) {
-            // Rotational / Essentials or Recurring Full House
-            margin = (quoteMode === 'AREAS') ? 0.30 : 0.28;
-        }
-
-        return {
-            laborHours: totalH,
-            base_labor_hours: baseLaborHours.toFixed(2),
-            basement_adjusted_hours: totalH.toFixed(2),
-            materialsPercent: 0.08 * matsMultiplier,
-            margin: margin,
-            engineName,
-            fixedFees: equipmentFees
-        };
-    };
-
-
-
-    const commercial_engine = (config) => {
-        const { sqft, subType, isRecurring } = config;
-        let prod = 350;
-        let mats = 0.07;
-        let margin = isRecurring ? 0.30 : 0.25;
-
-        if (subType === 'medical') { prod = 250; mats = 0.12; }
-        else if (subType === 'retail') { prod = 300; mats = 0.08; }
-        else if (subType === 'construction') { prod = 120; mats = 0.15; }
-
-        return {
-            laborHours: sqft / prod,
-            materialsPercent: mats,
-            margin: margin,
-            engineName: 'Commercial Engine'
-        };
-    };
-
-    const airbnb_engine = (config, addonsOverride = null) => {
-        const selectedAddons = addonsOverride !== null ? addonsOverride : strAddons;
-        return calculateSTREngine({ ...config, selectedAddons });
-    };
-
     const calculateAdvancedEstimate = useCallback((dataOverride = null) => {
         const data = dataOverride || formData;
         setIsCalculating(true);
@@ -443,223 +342,33 @@ const BookingPage = () => {
         if (calculationTimer.current) clearTimeout(calculationTimer.current);
 
         calculationTimer.current = setTimeout(async () => {
-            // 🛡️ Precio oficial: motor de CleaningIQ (quote-engine), con los precios de la empresa.
-            // Sin respuesta del servidor no se muestra precio: la copia local puede no coincidir.
+            // Precio oficial: motor de CleaningIQ (quote-engine) con los precios, extras y sede de la empresa
             const recurringConversion = data.recurringConversionOverride ?? isRecurringConverted;
-            let serverQuote = null;
             try {
-                serverQuote = await callCleaningIQ('quote-engine', {
-                    ...toQuoteInput(data, data.strAddonsOverride ?? strAddons, recurringConversion),
+                const serverQuote = await callCleaningIQ('quote-engine', {
+                    ...toQuoteInput(data, recurringConversion),
                     organization_id: CLEANINGIQ_ORG_ID
                 });
+                setEstimatedPrice(fromServer(serverQuote));
+                setPriceError('');
             } catch (e) {
                 console.warn('quote-engine unavailable:', e.message);
                 setEstimatedPrice(null);
                 setPriceError(e.message || "We couldn't calculate your price right now. Please try again.");
+            } finally {
                 setIsCalculating(false);
-                return;
             }
-            setPriceError('');
+        }, 400);
+    }, [formData, isRecurringConverted]);
 
-            const { mainService, subService, sqft, beds, baths, frequency, extras, basementType, levels, distance, address } = data;
-            const isRecurring = frequency !== 'one-time';
-            const sqftNum = parseInt(sqft) || 0;
-            const bedCount = parseInt(beds) || 0;
-            const bathCount = parseFloat(baths) || 0;
-
-            const BASE_WAGE = 19;
-            const REAL_HOURLY_COST = BASE_WAGE * 1.12;
-            const OVERHEAD_RATE = 0.15;
-
-            let engineResult;
-            const config = {
-                sqft: sqftNum,
-                beds: bedCount,
-                baths: bathCount,
-                subType: subService,
-                isRecurring,
-                extras,
-                basementType: basementType,
-                levels: levels || 1,
-                quoteMode: data.quoteMode,
-                roomSelection: data.roomSelection
-            };
-
-            // SEPARATE ENGINES AT TOP LEVEL
-            switch (mainService) {
-                case 'residential':
-                    engineResult = residential_engine(config);
-                    break;
-                case 'commercial':
-                    engineResult = commercial_engine(config);
-                    break;
-                case 'short_term':
-                    engineResult = airbnb_engine(config, data.strAddonsOverride ?? null);
-                    break;
-                default:
-                    engineResult = { laborHours: 0, materialsPercent: 0, margin: 0.25, engineName: 'Generic' };
-            }
-
-            let { laborHours, materialsPercent, margin, engineName, fixedFees = 0, basementLabel = "" } = engineResult;
-
-            // Enforce Minimums
-            if (sqftNum > 1500 && laborHours < 1) {
-                laborHours = 1.5;
-            }
-
-            // Extra Services (Legacy fixed fee bypass for Residential)
-            let optionalFees = fixedFees;
-            if (mainService !== 'residential') {
-                extras.forEach(extraId => {
-                    if (extraId === 'fridge') optionalFees += 35;
-                    if (extraId === 'oven') optionalFees += 35;
-                    if (extraId === 'cabinets') optionalFees += 45;
-                    if (extraId === 'blinds') optionalFees += 30;
-                });
-            }
-
-
-            // Crew Logic (Startup Capacity Optimized)
-            let crewSize = 1;
-            if (mainService === 'residential') {
-                const duration_if_3 = laborHours / 3;
-                if (duration_if_3 >= 3.5 && duration_if_3 <= 4.5) {
-                    crewSize = 3;
-                } else if (duration_if_3 > 4.5) {
-                    crewSize = 4;
-                } else if (duration_if_3 < 3.0) {
-                    crewSize = 2;
-                } else {
-                    crewSize = 3; // Default preference
-                }
-                // Capacity Cap
-                if (crewSize > 4) crewSize = 4;
-            } else {
-                // Determine initial crew size for STR/Commercial
-                let initialLaborEstimate = laborHours;
-                if (mainService === 'short_term') {
-                    // For STR, we pre-calculate based on Sqft and Buffers to get the right scaling
-                    const personHours = (sqftNum / 300) + 1.0; // 1.0 is ~total buffers
-                    initialLaborEstimate = personHours;
-                }
-
-                if (initialLaborEstimate <= 3) {
-                    crewSize = 1;
-                } else if (initialLaborEstimate <= 6) {
-                    crewSize = 2;
-                } else {
-                    crewSize = Math.ceil(initialLaborEstimate / 3);
-                }
-
-                // If STR, re-run engine with the determined crewSize for final adjustment
-                // CRITICAL: must pass strAddonsOverride to avoid stale closure bug
-                if (mainService === 'short_term') {
-                    engineResult = airbnb_engine({ ...config, crewSize }, data.strAddonsOverride ?? null);
-                    laborHours = engineResult.laborHours;
-                }
-            }
-            const durationHours = laborHours / crewSize;
-
-            // 3️⃣ ZONE-BASED MARGIN MODIFIER
-            const ZIP_ZONES = {
-                '30188': 'ZONE_BASE', '30189': 'ZONE_BASE', '30101': 'ZONE_BASE', '30102': 'ZONE_BASE',
-                '30075': 'ZONE_PREMIUM', '30076': 'ZONE_PREMIUM', '30062': 'ZONE_PREMIUM', '30067': 'ZONE_PREMIUM', '30068': 'ZONE_PREMIUM',
-                '30114': 'ZONE_PRICE_SENSITIVE', '30115': 'ZONE_PRICE_SENSITIVE', '30107': 'ZONE_PRICE_SENSITIVE'
-            };
-
-            const userZip = data.zip || '30188';
-            const zone = ZIP_ZONES[userZip] || 'ZONE_BASE';
-            let zoneModifier = 0;
-            if (zone === 'ZONE_PREMIUM') zoneModifier = 0.03;
-            else if (zone === 'ZONE_PRICE_SENSITIVE') zoneModifier = -0.02;
-
-            const finalCalculatedMargin = margin + zoneModifier;
-
-            const laborCost = laborHours * REAL_HOURLY_COST;
-            const materials = laborCost * materialsPercent;
-            const overhead = laborCost * OVERHEAD_RATE;
-
-            const operatingCost = laborCost + materials + overhead + optionalFees;
-            const basePrice = operatingCost / (1 - finalCalculatedMargin);
-
-            // Transport Logic (Post-Address Only)
-            const calculateTransport = (dist) => {
-                const d = parseFloat(dist) || 0;
-                if (d === 0) return 0;
-                if (d <= 10) return 0;
-                if (d <= 20) return 25;
-                if (d > 20) return 40;
-                return 0;
-            };
-
-            const user_address_verified = !!address;
-            const transportFee = user_address_verified ? calculateTransport(distance) : 0;
-
-            // INTERNAL VALIDATION AUDIT
-            let validationError = null;
-            if (mainService === 'residential') {
-                const p = Math.round(basePrice); // Validate base price before transport
-                if (subService === 'deep') {
-                    if (sqftNum === 1200 && bedCount === 2 && bathCount === 2) {
-                        if (p < 340 || p > 380) validationError = "Deep Productivity Calibration Error";
-                    } else if (sqftNum === 2200 && bedCount === 4 && bathCount === 3) {
-                        if (p < 600 || p > 750) validationError = "Deep Productivity Calibration Error";
-                    }
-                }
-                else {
-                    if (sqftNum === 900 && bedCount === 1 && bathCount === 1 && subService === 'standard' && !isRecurring) {
-                        if (p < 190 || p > 230) validationError = "Productivity Calibration Warning";
-                    } else if (sqftNum === 1200 && bedCount === 2 && bathCount === 2 && subService === 'standard' && !isRecurring) {
-                        if (p < 270 || p > 300) validationError = "Productivity Calibration Warning";
-                    } else if (sqftNum === 1800 && bedCount === 3 && bathCount === 2 && isRecurring) {
-                        if (p < 320 || p > 380) validationError = "Productivity Calibration Warning";
-                    }
-                }
-            }
-
-            const finalPriceBeforeConversion = basePrice + transportFee;
-            const recurringFactor = recurringConversion ? 0.88 : 1.0;
-            const finalPrice = finalPriceBeforeConversion * recurringFactor;
-
-            setDiagnostics({
-                engine: engineName,
-                base_labor_hours: engineResult.base_hours || engineResult.base_labor_hours,
-                operational_adjusted_hours: engineResult.operational_adjusted_hours,
-                basement_adjusted_hours: engineResult.basement_adjusted_hours,
-                basementLabel,
-                laborHours: laborHours.toFixed(2),
-                crewSize: crewSize,
-                duration: durationHours.toFixed(1),
-                laborCost: laborCost.toFixed(2),
-                materials: materials.toFixed(2),
-                overhead: overhead.toFixed(2),
-                transport: transportFee.toFixed(2),
-                operatingCost: operatingCost.toFixed(2),
-                marginApplied: (margin * 100).toFixed(0) + '%',
-                basePrice: basePrice.toFixed(2),
-                finalPrice: finalPrice.toFixed(2),
-                pricePerSqft: sqftNum > 0 ? (finalPrice / sqftNum).toFixed(2) : '0',
-                calibrationStatus: validationError,
-                isTravelIncluded: user_address_verified
-            });
-
-
-            const officialCrew = serverQuote.crew_size ?? crewSize;
-            setEstimatedPrice({
-                total: serverQuote.total,
-                base: serverQuote.base,
-                transport: serverQuote.transport,
-                deposit: serverQuote.deposit,
-                duration: `${(serverQuote.duration_hours ?? durationHours).toFixed(1)} Hours`,
-                personnel: officialCrew > 1 ? `${officialCrew} Pro Cleaners` : "1 Pro Cleaner",
-                confidence: 98,
-                warning: validationError,
-                travelNote: !user_address_verified ? "Final price before travel fee (calculated after address confirmation)." : null
-            });
-
-            setIsCalculating(false);
-        }, 800); // Reduced delay for better reactivity while maintaining "calculating" feel
-    }, [formData, residential_engine, commercial_engine, airbnb_engine, isRecurringConverted, strAddons]);
+    // Agregar o quitar un extra y recalcular
+    const toggleAddon = (code) => {
+        track_event("upsell_toggled");
+        const extras = formData.extras.includes(code) ? formData.extras.filter(e => e !== code) : [...formData.extras, code];
+        const nextState = { ...formData, extras };
+        setFormData(nextState);
+        calculateAdvancedEstimate(nextState);
+    };
 
 
     const nextStep = () => {
@@ -701,33 +410,14 @@ const BookingPage = () => {
                 })
             : [];
 
-        // Build add-on line items with real prices
-        const addonLines = formData.mainService === 'short_term'
-            ? strAddons.map(id => {
-                const catalog = STR_ADDONS.find(a => a.id === id);
-                return catalog ? {
-                    desc: `Add-on: ${catalog.name}`,
-                    qty: 1,
-                    price: catalog.price_display.replace('+$~', '~$')  // "~$28" format
-                } : null;
-            }).filter(Boolean)
-            : formData.extras.map(ex => {
-                // Residential: show label and note included in labor
-                const labelMap = {
-                    oven: 'Interior Oven Detail', fridge: 'Interior Fridge Clean',
-                    cabinets: 'Interior Cabinets', blinds: 'Window Blinds',
-                    windows: 'Interior Windows', pet_light: 'Pet Hair (Light)',
-                    pet_heavy: 'Pet Hair Deep-Removal', laundry: 'Laundry Handling',
-                    organizing: 'Organizing & Declutter', sofa: 'Deep Sofa Sanitize'
-                };
-                return { desc: `Add-on: ${labelMap[ex] || ex.replace(/_/g, ' ').toUpperCase()}`, qty: 1, price: 'Incl. in Total' };
-            });
+        // Extras con su precio (catalogo de la empresa); el traslado ya va dentro del precio
+        const addonLines = (estimatedPrice?.addons || []).map(a => ({ desc: `Add-on: ${a.name}`, qty: 1, price: a.price }));
 
         const itemsList = [
             { desc: serviceTitle + (formData.quoteMode === 'AREAS' ? ' (Area-Based Protocol)' : ` (${formData.sqft} SQFT)`), qty: 1, price: estimatedPrice?.base },
             ...areaLines,
             ...addonLines,
-            { desc: 'Travel/Logistics Fee', qty: 1, price: estimatedPrice?.transport }
+            ...(estimatedPrice?.tax > 0 ? [{ desc: 'Sales tax', qty: 1, price: estimatedPrice.tax }] : [])
         ];
 
         const itemsRows = itemsList.map(item => `
@@ -1084,7 +774,7 @@ const BookingPage = () => {
 
         setIsSubmitting(true);
         try {
-            const quoteInput = toQuoteInput(formData, strAddons, isRecurringConverted);
+            const quoteInput = toQuoteInput(formData, isRecurringConverted);
             let currentLead = leadId;
             if (!currentLead) {
                 // No desbloqueo el precio en el paso 5: el lead se crea ahora
@@ -1229,6 +919,25 @@ const BookingPage = () => {
                                                 By Areas
                                             </button>
                                         </div>
+                                    )}
+                                </div>
+
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label htmlFor="bp-street" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Property Street Address</label>
+                                        <input id="bp-street" type="text" name="address" autoComplete="street-address" value={formData.address} onChange={handleChange} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 120 Main St" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="bp-zip" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">ZIP Code</label>
+                                        <input id="bp-zip" type="text" inputMode="numeric" maxLength={5} name="zip" value={formData.zip} onChange={(e) => handleChange({ target: { name: 'zip', value: e.target.value.replace(/\D/g, '') } })} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 30188" />
+                                        {errors.zip && <p className="text-red-400 text-xs font-bold">{errors.zip}</p>}
+                                    </div>
+                                    {homeLookup && (
+                                        <p className="md:col-span-3 text-xs font-bold" role="status" aria-live="polite">
+                                            {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
+                                            {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
+                                            {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
+                                        </p>
                                     )}
                                 </div>
 
@@ -1425,7 +1134,9 @@ const BookingPage = () => {
                                                                     <Lock className="w-4 h-4" /> Projected Investment Range
                                                                 </h4>
                                                                 <div className="text-5xl font-black text-white tracking-tighter italic">
-                                                                    ${Math.round(estimatedPrice.total * 0.9)} – ${Math.round(estimatedPrice.total * 1.1)}
+                                                                    {estimatedPrice.precision === 'range'
+                                                                        ? `$${estimatedPrice.range_low} – $${estimatedPrice.range_high}`
+                                                                        : `$${Math.floor(estimatedPrice.total * 0.9 / 5) * 5} – $${Math.ceil(estimatedPrice.total * 1.1 / 5) * 5}`}
                                                                 </div>
                                                                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-2 italic">
                                                                     Enter your contact info to unlock your exact price.
@@ -1462,16 +1173,10 @@ const BookingPage = () => {
                                                                                     action: 'quote',
                                                                                     organization_id: CLEANINGIQ_ORG_ID,
                                                                                     contact: { name: formData.name, email: formData.email, phone: formData.phone },
-                                                                                    quote_input: toQuoteInput(formData, strAddons, isRecurringConverted)
+                                                                                    quote_input: toQuoteInput(formData, isRecurringConverted)
                                                                                 });
                                                                                 setLeadId(result.lead_id);
-                                                                                setEstimatedPrice(prev => ({
-                                                                                    ...prev,
-                                                                                    total: result.quote.total,
-                                                                                    base: result.quote.base,
-                                                                                    transport: result.quote.transport,
-                                                                                    deposit: result.quote.deposit
-                                                                                }));
+                                                                                setEstimatedPrice(fromServer(result.quote));
                                                                                 setIsEmailVerified(true);
                                                                                 setErrors({});
                                                                                 track_event("lead_captured");
@@ -1520,7 +1225,7 @@ const BookingPage = () => {
                                                 <div className="grid lg:grid-cols-2 gap-10">
                                                     <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900 border border-indigo-500/30 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
                                                         <div className="relative z-10 space-y-6">
-                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">UNLOCKED: {diagnostics?.engine} Cost-Based Quote</span>
+                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">UNLOCKED: Your Exact Quote</span>
                                                             <div className="space-y-1">
                                                                 <h4 className="text-6xl font-black text-white tracking-tighter">${estimatedPrice.total}</h4>
                                                                 <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] animate-pulse">
@@ -1531,49 +1236,21 @@ const BookingPage = () => {
                                                             <div className="space-y-3 pt-6 border-t border-white/10">
                                                                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
                                                                     <div className="flex items-center gap-3 text-[10px] font-black font-mono uppercase text-slate-400"><Clock className="w-4 h-4 text-emerald-400" /> Project Duration</div>
-                                                                    <div className="text-sm font-black text-slate-200">{estimatedPrice.duration} Hours</div>
+                                                                    <div className="text-sm font-black text-slate-200">{estimatedPrice.duration} Hours On Site</div>
                                                                 </div>
                                                                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
                                                                     <div className="flex items-center gap-3 text-[10px] font-black font-mono uppercase text-slate-400"><User className="w-4 h-4 text-emerald-400" /> Deployed Workforce</div>
-                                                                    <div className="text-sm font-black text-slate-200">{estimatedPrice.personnel} Professional Crew</div>
+                                                                    <div className="text-sm font-black text-slate-200">{estimatedPrice.personnel}</div>
                                                                 </div>
-                                                                {diagnostics?.engine === 'Commercial' && (
-                                                                    <div className="flex justify-between items-center bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                                                                        <div className="flex items-center gap-3 text-xs font-black uppercase text-emerald-400">Yield/SQFT</div>
-                                                                        <div className="text-sm font-black text-white">${diagnostics?.pricePerSqft}</div>
-                                                                    </div>
-                                                                )}
                                                             </div>
 
-                                                            {/* Add-ons Section Unlocked */}
-                                                            {formData.mainService === 'short_term' ? (
+                                                            {/* Extras de la empresa, con precio */}
+                                                            {addonChoices.length > 0 && (
                                                                 <div className="grid grid-cols-2 gap-2 pt-4">
-                                                                    {STR_ADDONS.map(addon => (
-                                                                        <button key={addon.id} onClick={() => {
-                                                                            const next = strAddons.includes(addon.id) ? strAddons.filter(id => id !== addon.id) : [...strAddons, addon.id];
-                                                                            setStrAddons(next);
-                                                                            calculateAdvancedEstimate({ ...formData, strAddonsOverride: next });
-                                                                        }} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${strAddons.includes(addon.id) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
-                                                                            <span>{addon.label}</span>
-                                                                            <span className="text-emerald-400">✓</span>
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="grid grid-cols-2 gap-2 pt-4">
-                                                                    {[
-                                                                        { id: 'fridge', label: 'Int. Fridge' },
-                                                                        { id: 'oven', label: 'Int. Oven' },
-                                                                        { id: 'cabinets', label: 'Int. Cabinets' },
-                                                                        { id: 'blinds', label: 'Full Blinds' }
-                                                                    ].map(extra => (
-                                                                        <button key={extra.id} onClick={() => {
-                                                                            const newExtras = formData.extras.includes(extra.id) ? formData.extras.filter(e => e !== extra.id) : [...formData.extras, extra.id];
-                                                                            const nextState = { ...formData, extras: newExtras };
-                                                                            setFormData(nextState);
-                                                                            calculateAdvancedEstimate(nextState);
-                                                                        }} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${formData.extras.includes(extra.id) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
-                                                                            {extra.label} <Zap className="w-3 h-3 text-emerald-400 ml-1" />
+                                                                    {addonChoices.map(addon => (
+                                                                        <button key={addon.code} type="button" aria-pressed={formData.extras.includes(addon.code)} onClick={() => toggleAddon(addon.code)} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${formData.extras.includes(addon.code) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
+                                                                            <span>{addon.name}</span>
+                                                                            <span className="text-emerald-400">{formData.extras.includes(addon.code) ? '✓' : `+$${Number(addon.price)}`}</span>
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -1598,59 +1275,18 @@ const BookingPage = () => {
 
 
                                         {isEmailVerified && (
-                                            <div className="bg-[#020617]/50 border border-emerald-500/30 rounded-[2.5rem] p-8 space-y-6 animate-in slide-in-from-top-4 duration-700">
+                                            <div className="bg-[#020617]/50 border border-emerald-500/30 rounded-[2.5rem] p-8 space-y-4 animate-in slide-in-from-top-4 duration-700">
                                                 <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                                    <BarChart3 className="w-4 h-4" /> Multi-Engine Cost Breakdown (UNLOCKED)
+                                                    <BarChart3 className="w-4 h-4" /> Your Price
                                                 </h4>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[11px] font-mono">
-                                                    {diagnostics?.basementLabel && (
-                                                        <div className="md:col-span-2 bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-2xl flex items-center gap-4 text-indigo-300 font-bold">
-                                                            <Sparkles className="w-5 h-5" />
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] uppercase tracking-widest opacity-70">Structural Engineering Adjustment</span>
-                                                                <span className="text-sm">{diagnostics.basementLabel}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {diagnostics?.calibrationStatus && (
-
-                                                        <div className="md:col-span-2 bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-center gap-4 text-red-400 font-bold animate-pulse">
-                                                            <Bot className="w-6 h-6" />
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[8px] uppercase tracking-widest opacity-70">Internal Systems Check</span>
-                                                                <span className="text-sm">{diagnostics.calibrationStatus}</span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    <div className="space-y-3">
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Base Labor Hours:</span> <span className="text-white font-bold">{diagnostics?.base_labor_hours}h</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Adj. Labor Hours:</span> <span className="text-white font-bold">{diagnostics?.basement_adjusted_hours}h</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Crew Size / Duration:</span> <span className="text-white font-bold">{diagnostics?.crewSize}p / {diagnostics?.duration}h</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Labor Cost (Real):</span> <span className="text-white font-bold">${diagnostics?.laborCost}</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Materials & Consumables:</span> <span className="text-white">${diagnostics?.materials}</span></div>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Operational Overhead (15%):</span> <span className="text-white">${diagnostics?.overhead}</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-500">Gross Operating Cost:</span> <span className="text-white font-bold">${diagnostics?.operatingCost}</span></div>
-                                                        <div className="flex justify-between border-b border-indigo-500/30 pb-1"><span className="text-indigo-400 font-black">Base Price (Before Travel):</span> <span className="text-indigo-400 font-black">${diagnostics?.basePrice}</span></div>
-                                                        <div className="flex justify-between border-b border-white/5 pb-1">
-                                                            <span className="text-slate-500">Travel Fee {diagnostics?.isTravelIncluded ? `(${formData.distance} mi)` : '(Post-Address capture)'}:</span>
-                                                            <span className={`font-bold ${diagnostics?.isTravelIncluded ? 'text-emerald-400' : 'text-slate-600'}`}>+${diagnostics?.transport}</span>
-                                                        </div>
-                                                    </div>
-
-                                                </div>
-
-                                                <div className="pt-2 flex justify-between items-center bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-emerald-500 font-bold tracking-[0.2em]">ENGINE TYPE</span>
-                                                        <span className="text-xs font-black text-white">{diagnostics?.engine} V4.0 (True Margin Model)</span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Calculated Final Price</div>
-                                                        <div className="text-2xl font-black text-white">${diagnostics?.finalPrice}</div>
-                                                    </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">{subServiceInfo?.title || 'Cleaning'}{formData.sqft ? ` (${formData.sqft} sq ft)` : ''}</span><span className="text-white font-bold">${estimatedPrice.base}</span></div>
+                                                    {estimatedPrice.addons.map(a => (
+                                                        <div key={a.code} className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">+ {a.name}</span><span className="text-white">${a.price}</span></div>
+                                                    ))}
+                                                    {estimatedPrice.tax > 0 && <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">Sales tax</span><span className="text-white">${estimatedPrice.tax}</span></div>}
+                                                    <div className="flex justify-between pt-1"><span className="text-emerald-400 font-black uppercase tracking-widest text-xs">Total (travel included)</span><span className="text-2xl font-black text-white">${estimatedPrice.total}</span></div>
+                                                    <div className="flex justify-between text-xs"><span className="text-slate-500">Deposit to book</span><span className="text-slate-300 font-bold">${estimatedPrice.deposit}</span></div>
                                                 </div>
                                             </div>
                                         )}
@@ -1698,70 +1334,26 @@ const BookingPage = () => {
                                         <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl space-y-4">
                                             <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-4 h-4" /> Optional Service Enhancements</h4>
                                             <div className="space-y-2">
-                                                {formData.mainService === 'short_term' ? (
-                                                    // STR toggle add-ons — use str_ IDs to match the engine catalog
-                                                    [
-                                                        { id: 'str_windows', label: 'Interior Window Cleaning', price: '~28' },
-                                                        { id: 'str_pet', label: 'Pet Hair & Dander Treatment', price: '~34' },
-                                                        { id: 'str_cabinets', label: 'Interior Cabinet Wipe-Down', price: '~32' }
-                                                    ].map(upsell => {
-                                                        const isSelected = strAddons.includes(upsell.id);
-                                                        return (
-                                                            <button
-                                                                key={upsell.id}
-                                                                onClick={() => {
-                                                                    track_event("upsell_toggled");
-                                                                    const next = isSelected
-                                                                        ? strAddons.filter(id => id !== upsell.id)
-                                                                        : [...strAddons, upsell.id];
-                                                                    setStrAddons(next);
-                                                                    calculateAdvancedEstimate({ ...formData, strAddonsOverride: next });
-                                                                }}
-                                                                className={`w-full p-3 rounded-xl border flex justify-between items-center transition-all group ${isSelected ? 'bg-emerald-500/15 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'}`}
-                                                            >
-                                                                <span className="text-xs font-bold flex items-center gap-2">
-                                                                    {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
-                                                                    {upsell.label}
-                                                                </span>
-                                                                <span className={`text-xs font-black ${isSelected ? 'text-emerald-400' : 'text-emerald-500'}`}>
-                                                                    {isSelected ? '✓ Added' : `+$${upsell.price}`}
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })
-                                                ) : (
-                                                    // Residential/Commercial toggle add-ons
-                                                    [
-                                                        { id: 'windows', label: 'Interior Windows (10-15)', price: '65' },
-                                                        { id: 'pet_heavy', label: 'Pet Hair Deep-Removal', price: '45' },
-                                                        { id: 'sofa', label: 'Deep Sofa Sanitize', price: '55' }
-                                                    ].map(upsell => {
-                                                        const isSelected = formData.extras.includes(upsell.id);
-                                                        return (
-                                                            <button
-                                                                key={upsell.id}
-                                                                onClick={() => {
-                                                                    track_event("upsell_toggled");
-                                                                    const newExtras = isSelected
-                                                                        ? formData.extras.filter(e => e !== upsell.id)
-                                                                        : [...formData.extras, upsell.id];
-                                                                    const nextState = { ...formData, extras: newExtras };
-                                                                    setFormData(nextState);
-                                                                    calculateAdvancedEstimate(nextState);
-                                                                }}
-                                                                className={`w-full p-3 rounded-xl border flex justify-between items-center transition-all group ${isSelected ? 'bg-emerald-500/15 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'}`}
-                                                            >
-                                                                <span className="text-xs font-bold flex items-center gap-2">
-                                                                    {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
-                                                                    {upsell.label}
-                                                                </span>
-                                                                <span className={`text-xs font-black ${isSelected ? 'text-emerald-400' : 'text-emerald-500'}`}>
-                                                                    {isSelected ? '✓ Added' : `+$${upsell.price}`}
-                                                                </span>
-                                                            </button>
-                                                        );
-                                                    })
-                                                )}
+                                                {addonChoices.map(upsell => {
+                                                    const isSelected = formData.extras.includes(upsell.code);
+                                                    return (
+                                                        <button
+                                                            key={upsell.code}
+                                                            type="button"
+                                                            aria-pressed={isSelected}
+                                                            onClick={() => toggleAddon(upsell.code)}
+                                                            className={`w-full p-3 rounded-xl border flex justify-between items-center transition-all group ${isSelected ? 'bg-emerald-500/15 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'}`}
+                                                        >
+                                                            <span className="text-xs font-bold flex items-center gap-2">
+                                                                {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
+                                                                {upsell.name}
+                                                            </span>
+                                                            <span className={`text-xs font-black ${isSelected ? 'text-emerald-400' : 'text-emerald-500'}`}>
+                                                                {isSelected ? '✓ Added' : `+$${Number(upsell.price)}`}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                             <p className="text-[9px] text-slate-500 italic">Tap to add or remove — price updates instantly.</p>
                                         </div>

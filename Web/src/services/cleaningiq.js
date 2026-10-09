@@ -13,3 +13,15 @@ export async function callCleaningIQ(name, body) {
     if (!res.ok) throw new Error(data?.error || 'Service temporarily unavailable. Please try again.');
     return data;
 }
+
+// Extras de la empresa (catalogo Add-ons de CleaningIQ) que se muestran en linea, con su precio
+export async function getAddons(orgId = CLEANINGIQ_ORG_ID) {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/public_addons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ p_org: orgId })
+    });
+    if (!res.ok) throw new Error('Add-ons unavailable');
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+}
