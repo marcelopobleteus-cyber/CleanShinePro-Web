@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+      "continue": true
+    },
+    {
+      "src": "/img/(.*)",
+      "headers": { "Cache-Control": "public, max-age=86400" },
+      "continue": true
+    },
+    { "handle": "filesystem" },
+    {
+      "src": "/(assets|img)/(.*)",
+      "status": 404,
+      "headers": { "Cache-Control": "no-store" }
+    }
+  ]
+}
