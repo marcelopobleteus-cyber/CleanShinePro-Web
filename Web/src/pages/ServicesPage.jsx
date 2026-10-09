@@ -116,6 +116,8 @@ const ServicesPage = ({ onNavigate }) => {
                         <div className="relative bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                             <img
                                 src="/img/cleaning-crew.webp"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Professional Commercial Cleaning Crew"
                                 className="w-full h-80 object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
                             />
@@ -227,6 +229,8 @@ const ServicesPage = ({ onNavigate }) => {
                         <div className="relative bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                             <img
                                 src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Modern Residential"
                                 className="w-full h-80 object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
                             />
@@ -270,6 +274,8 @@ const ServicesPage = ({ onNavigate }) => {
                         <div className="relative bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                             <img
                                 src="https://images.unsplash.com/photo-1556020685-ae41abfc9365?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                loading="lazy"
+                                decoding="async"
                                 alt="Airbnb Rental"
                                 className="w-full h-80 object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
                             />

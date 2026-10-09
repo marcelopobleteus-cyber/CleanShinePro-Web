@@ -62,6 +62,8 @@ const Hero = ({ onNavigate, t }) => {
           <div className="absolute top-8 right-0 w-[80%] h-[400px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-[#0B1121]">
             <img
               src="/img/team-hq.webp"
+              loading="lazy"
+              decoding="async"
               alt="CleanShine Pro Headquarters and Fleet"
               className="w-full h-full object-cover opacity-80 hover:scale-105 transition-transform duration-700"
             />
@@ -74,6 +76,8 @@ const Hero = ({ onNavigate, t }) => {
           <div className="absolute bottom-12 left-0 w-[60%] h-[300px] rounded-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-[#0B1121] transform hover:-translate-y-2 transition-transform duration-500">
             <img
               src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+              loading="lazy"
+              decoding="async"
               alt="Modern Living Room Cleaning"
               className="w-full h-full object-cover opacity-80"
             />

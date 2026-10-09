@@ -52,7 +52,7 @@ const BlogPage = () => {
                     {posts.map((post) => (
                         <div key={post.id} className="group bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden hover:border-emerald-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10">
                             <div className="aspect-video relative overflow-hidden">
-                                <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <img src={post.image} alt={post.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                 <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-500 text-[#020617] text-[10px] font-black uppercase tracking-widest rounded-full">
                                     {post.category}
                                 </div>
