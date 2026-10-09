@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Hero from './components/Hero';
 import TrustBar from './components/TrustBar';
@@ -6,16 +6,6 @@ import Services from './components/Services';
 import Process from './components/Process';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
-import ServicesPage from './pages/ServicesPage';
-import ProcessPage from './pages/ProcessPage';
-import ContactPage from './pages/ContactPage';
-import ServiceAreasPage from './pages/ServiceAreasPage';
-import BookingPage from './pages/BookingPage';
-import AboutPage from './pages/AboutPage';
-import PrivacyPage from './pages/PrivacyPage';
-import BlogPage from './pages/BlogPage';
-import LocalServicePage from './pages/LocalServicePage';
-import CommercialAssistant from './components/CommercialAssistant';
 import FAQ from './components/FAQ';
 import { BUSINESS_PHONE } from './config';
 import { Phone, ArrowRight } from 'lucide-react';
@@ -23,6 +13,21 @@ import { Phone, ArrowRight } from 'lucide-react';
 // Chat SHINE oculto: su llave de Gemini no esta configurada y respondia "offline (Config Error)".
 // Se reactiva cuando pase por una funcion del servidor (la llave no puede ir en el navegador).
 const SHOW_ASSISTANT = false;
+
+// La portada se descarga sola; el resto de las paginas cuando se abren
+const loadBooking = () => import('./pages/BookingPage');
+const BookingPage = lazy(loadBooking);
+const ServicesPage = lazy(() => import('./pages/ServicesPage'));
+const ProcessPage = lazy(() => import('./pages/ProcessPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const ServiceAreasPage = lazy(() => import('./pages/ServiceAreasPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const LocalServicePage = lazy(() => import('./pages/LocalServicePage'));
+const CommercialAssistant = lazy(() => import('./components/CommercialAssistant'));
+
+const PageLoading = () => <div className="min-h-[60vh]" aria-busy="true" />;
 
 function App() {
   // Al volver de Stripe Checkout (?booking=...) se abre directamente la reserva
@@ -52,6 +57,13 @@ function App() {
   };
 
   const t = translations[lang];
+
+  // El cotizador es la pagina que mas importa: se descarga en segundo plano apenas
+  // termina de cargar la portada, asi "Get Quote" abre al instante
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+    idle(() => { loadBooking().catch(() => {}); });
+  }, []);
 
   const handleNavigate = (page, data = null) => {
     setCurrentPage(page);
@@ -244,10 +256,16 @@ function App() {
       </nav>
 
       <main className="flex-grow">
-        {renderPage()}
+        <Suspense fallback={<PageLoading />}>
+          {renderPage()}
+        </Suspense>
       </main>
 
-      {SHOW_ASSISTANT && <CommercialAssistant lang={lang} t={t} />}
+      {SHOW_ASSISTANT && (
+        <Suspense fallback={null}>
+          <CommercialAssistant lang={lang} t={t} />
+        </Suspense>
+      )}
       <Footer onNavigate={handleNavigate} />
       <Analytics />
     </div>
