@@ -230,6 +230,24 @@ const BookingPage = () => {
     useEffect(() => {
         getAddons().then(setCatalogAddons).catch(() => setCatalogAddons([]));
     }, []);
+    // Datos de la casa desde registros publicos (CleaningIQ property-lookup): se completan y la persona confirma
+    const [homeLookup, setHomeLookup] = useState(null);
+    const findHome = async () => {
+        const street = (formData.address || '').trim();
+        if (street.length < 5 || !/^\d{5}$/.test(formData.zip || '')) return;
+        const key = `${street.toLowerCase()}|${formData.zip}`;
+        if (homeLookup?.key === key) return;
+        setHomeLookup({ key, status: 'loading' });
+        try {
+            const d = await callCleaningIQ('property-lookup', { street, zip: formData.zip });
+            const beds = d.bedrooms != null ? String(Math.min(Math.max(Math.round(d.bedrooms), 1), 6)) : null;
+            const baths = d.bathrooms != null ? String(Math.min(Math.max(Math.round(d.bathrooms * 2) / 2, 1), 5)) : null;
+            setFormData(prev => ({ ...prev, sqft: d.sqft ? String(d.sqft) : prev.sqft, beds: beds ?? prev.beds, baths: baths ?? prev.baths }));
+            setHomeLookup({ key, status: 'found', summary: [d.sqft && `${Number(d.sqft).toLocaleString('en-US')} sq ft`, d.bedrooms != null && `${d.bedrooms} bedrooms`, d.bathrooms != null && `${d.bathrooms} bathrooms`].filter(Boolean).join(' · ') });
+        } catch {
+            setHomeLookup({ key, status: 'none' });
+        }
+    };
     const addonChoices = catalogAddons.filter(a => !a.applies_to?.length || a.applies_to.includes(formData.mainService));
 
 
@@ -904,6 +922,25 @@ const BookingPage = () => {
                                     )}
                                 </div>
 
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label htmlFor="bp-street" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Property Street Address</label>
+                                        <input id="bp-street" type="text" name="address" autoComplete="street-address" value={formData.address} onChange={handleChange} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 120 Main St" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="bp-zip" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">ZIP Code</label>
+                                        <input id="bp-zip" type="text" inputMode="numeric" maxLength={5} name="zip" value={formData.zip} onChange={(e) => handleChange({ target: { name: 'zip', value: e.target.value.replace(/\D/g, '') } })} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 30188" />
+                                        {errors.zip && <p className="text-red-400 text-xs font-bold">{errors.zip}</p>}
+                                    </div>
+                                    {homeLookup && (
+                                        <p className="md:col-span-3 text-xs font-bold" role="status" aria-live="polite">
+                                            {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
+                                            {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
+                                            {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
+                                        </p>
+                                    )}
+                                </div>
+
                                 {formData.quoteMode === 'AREAS' && formData.mainService === 'residential' ? (
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6 animate-in fade-in zoom-in-95 duration-300">
                                         {[
@@ -980,12 +1017,6 @@ const BookingPage = () => {
                                         )}
                                     </div>
                                 )}
-
-                                <div className="space-y-2 md:col-span-2">
-                                    <label htmlFor="bp-zip" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Property ZIP Code</label>
-                                    <input id="bp-zip" type="text" inputMode="numeric" maxLength={5} name="zip" value={formData.zip} onChange={(e) => handleChange({ target: { name: 'zip', value: e.target.value.replace(/\D/g, '') } })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-xl font-bold" placeholder="e.g. 30188" />
-                                    {errors.zip && <p className="text-red-400 text-xs font-bold">{errors.zip}</p>}
-                                </div>
 
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Service Frequency</label>
