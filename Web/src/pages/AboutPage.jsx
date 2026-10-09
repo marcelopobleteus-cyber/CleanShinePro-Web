@@ -128,7 +128,7 @@ const AboutPage = ({ onNavigate }) => {
                     </div>
                     <div className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
                         <img
-                            src="/assets/cleaning-crew.webp"
+                            src="/img/cleaning-crew.webp"
                             alt="CleanShine Pro Cleaning Crew"
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />

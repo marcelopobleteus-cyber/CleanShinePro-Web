@@ -115,7 +115,7 @@ const ServicesPage = ({ onNavigate }) => {
                         <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                         <div className="relative bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                             <img
-                                src="/assets/cleaning-crew.webp"
+                                src="/img/cleaning-crew.webp"
                                 alt="Professional Commercial Cleaning Crew"
                                 className="w-full h-80 object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
                             />
