@@ -6,6 +6,7 @@ import Services from './components/Services';
 import Process from './components/Process';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
+import TeamLogin from './components/TeamLogin';
 import FAQ from './components/FAQ';
 import { BUSINESS_PHONE } from './config';
 import { Phone, ArrowRight } from 'lucide-react';
@@ -43,7 +44,13 @@ function App() {
       navServices: "Services",
       navProcess: "Process",
       navContact: "Contact",
-      btnQuote: "Get Quote"
+      btnQuote: "Get Quote",
+      navLogin: "Team login",
+      loginTitle: "Sign in to the system",
+      loginAssociate: "Associate",
+      loginAssociateSub: "CleanShine Pro team portal",
+      loginMaster: "Master",
+      loginMasterSub: "CleaningIQ · all accounts"
     },
     es: {
       promo: "Obtén un porcentaje de descuento en tu primer servicio contratando algunos de nuestros planes!",
@@ -52,7 +59,13 @@ function App() {
       navServices: "Servicios",
       navProcess: "Proceso",
       navContact: "Contacto",
-      btnQuote: "Cotizar"
+      btnQuote: "Cotizar",
+      navLogin: "Acceso equipo",
+      loginTitle: "Entrar al sistema",
+      loginAssociate: "Asociado",
+      loginAssociateSub: "Portal del equipo de CleanShine Pro",
+      loginMaster: "Master",
+      loginMasterSub: "CleaningIQ · todas las cuentas"
     }
   };
 
@@ -247,6 +260,8 @@ function App() {
                 ES
               </button>
             </div>
+
+            <TeamLogin t={t} />
 
             <button onClick={() => handleNavigate('booking')} className="hidden md:block px-6 py-2.5 bg-[#0A2E5C] hover:bg-[#020617] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg">
               {t.btnQuote}

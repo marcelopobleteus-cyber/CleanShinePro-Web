@@ -1,5 +1,6 @@
 import React from 'react';
 import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { ASSOCIATE_LOGIN_URL, MASTER_LOGIN_URL } from '../config';
 
 const Footer = ({ onNavigate }) => {
     return (
@@ -78,6 +79,12 @@ const Footer = ({ onNavigate }) => {
 
                 <div className="border-t border-white/5 pt-8 text-center text-slate-500 text-sm">
                     <p>&copy; {new Date().getFullYear()} CleanShine Pro LLC. All rights reserved. Fully Insured & Bonded.</p>
+                    <p className="mt-3 text-xs">
+                        Team login:{' '}
+                        <a href={ASSOCIATE_LOGIN_URL} className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">Associate</a>
+                        {' · '}
+                        <a href={MASTER_LOGIN_URL} className="text-violet-300 hover:text-violet-200 underline underline-offset-2">Master</a>
+                    </p>
                 </div>
             </div>
         </footer>

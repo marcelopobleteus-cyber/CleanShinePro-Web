@@ -240,13 +240,29 @@ const BookingPage = () => {
         setHomeLookup({ key, status: 'loading' });
         try {
             const d = await callCleaningIQ('property-lookup', { street, zip: formData.zip });
+            // Edificio con varias unidades (apartamentos): se elige la unidad; no se usan los datos de otra
+            if (d.multi_unit) { setHomeLookup({ key, status: 'multi', units: d.units || [], unit: d.unit || '' }); return; }
             const beds = d.bedrooms != null ? String(Math.min(Math.max(Math.round(d.bedrooms), 1), 6)) : null;
             const baths = d.bathrooms != null ? String(Math.min(Math.max(Math.round(d.bathrooms * 2) / 2, 1), 5)) : null;
             setFormData(prev => ({ ...prev, sqft: d.sqft ? String(d.sqft) : prev.sqft, beds: beds ?? prev.beds, baths: baths ?? prev.baths }));
-            setHomeLookup({ key, status: 'found', summary: [d.sqft && `${Number(d.sqft).toLocaleString('en-US')} sq ft`, d.bedrooms != null && `${d.bedrooms} bedrooms`, d.bathrooms != null && `${d.bathrooms} bathrooms`].filter(Boolean).join(' · ') });
+            setHomeLookup({ key, status: 'found', units: d.units || [], unit: d.unit || '', summary: [d.sqft && `${Number(d.sqft).toLocaleString('en-US')} sq ft`, d.bedrooms != null && `${d.bedrooms} bedrooms`, d.bathrooms != null && `${d.bathrooms} bathrooms`].filter(Boolean).join(' · ') });
         } catch {
             setHomeLookup({ key, status: 'none' });
         }
+    };
+    // Unidad elegida de un edificio: llena tamano, dormitorios y banos y la agrega a la calle
+    const pickUnit = (unit) => {
+        const u = (homeLookup?.units || []).find((x) => x.unit === unit);
+        if (!u) return;
+        const street = (formData.address || '').replace(/[,\s]+(?:(?:apartment|apt|unit|suite|ste)(?:\.\s*|\s+)#?\s*|#\s*)[a-z0-9][a-z0-9-]*\s*$/i, '').trim();
+        setFormData(prev => ({
+            ...prev,
+            address: `${street} Apt ${u.unit}`,
+            sqft: u.sqft ? String(u.sqft) : prev.sqft,
+            beds: u.bedrooms != null ? String(Math.min(Math.max(Math.round(u.bedrooms), 1), 6)) : prev.beds,
+            baths: u.bathrooms != null ? String(Math.min(Math.max(Math.round(u.bathrooms * 2) / 2, 1), 5)) : prev.baths,
+        }));
+        setHomeLookup(h => ({ ...h, unit: u.unit }));
     };
     const addonChoices = catalogAddons.filter(a => !a.applies_to?.length || a.applies_to.includes(formData.mainService));
 
@@ -937,7 +953,21 @@ const BookingPage = () => {
                                             {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
                                             {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
                                             {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
+                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : 'Please enter the size and rooms of your unit below.'}</span>}
                                         </p>
+                                    )}
+                                    {homeLookup && homeLookup.units?.length > 1 && (
+                                        <div className="md:col-span-3 space-y-2">
+                                            <label htmlFor="bp-unit" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Your unit ({homeLookup.units.length} in this building)</label>
+                                            <select id="bp-unit" value={homeLookup.unit || ''} onChange={(e) => pickUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-bold">
+                                                <option value="" className="bg-[#020617]">Select your unit…</option>
+                                                {homeLookup.units.map((u) => (
+                                                    <option key={u.unit} value={u.unit} className="bg-[#020617]">
+                                                        {`Apt ${u.unit}${u.bedrooms != null && u.bathrooms != null ? ` · ${u.bedrooms} bd / ${u.bathrooms} ba` : ''}${u.sqft ? ` · ${Number(u.sqft).toLocaleString('en-US')} sq ft` : ''}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     )}
                                 </div>
 
