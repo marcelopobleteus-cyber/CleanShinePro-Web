@@ -1,5 +1,6 @@
 import React from 'react';
-import { Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { BUSINESS } from '../site';
 import Link from './Link';
 import { ASSOCIATE_LOGIN_URL, MASTER_LOGIN_URL } from '../config';
 import { CITIES, cityPath } from '../site';
@@ -51,6 +52,7 @@ const Footer = ({ lang = 'en' }) => {
                         <h2 className="font-bold mb-4">{t.contact}</h2>
                         <ul className="space-y-3 text-sm text-slate-400">
                             <li className="flex items-start gap-2"><MapPin className="text-emerald-500 mt-0.5 shrink-0" size={16} /><span>900 Buice Lake Pkwy<br />Woodstock, GA 30188</span></li>
+                            <li className="flex items-center gap-2"><Phone className="text-emerald-500 shrink-0" size={16} /><a href={`tel:${BUSINESS.phone}`} className={linkCls}>{BUSINESS.phoneDisplay}</a></li>
                             <li className="flex items-center gap-2"><Mail className="text-emerald-500 shrink-0" size={16} /><a href="mailto:contact@cleanshinepro.com" className={`${linkCls} break-all`}>contact@cleanshinepro.com</a></li>
                         </ul>
                         <Link to="/quote" className="inline-block mt-5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold">{t.quote}</Link>

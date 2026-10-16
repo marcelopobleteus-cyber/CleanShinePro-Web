@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Send, MapPin, Mail, CheckCircle, ArrowRight } from 'lucide-react';
+import { Send, MapPin, Mail, Phone, CheckCircle, ArrowRight } from 'lucide-react';
+import { BUSINESS } from '../site';
 import { CLEANINGIQ_ORG_ID, callCleaningIQ } from '../services/cleaningiq';
 import { getAttribution } from '../lib/attribution';
 import Link from '../components/Link';
@@ -94,6 +95,19 @@ const ContactPage = () => {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+
+                        <div>
+                            <a href={`tel:${BUSINESS.phone}`} className="flex items-start gap-4 p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-emerald-500/30 transition-colors">
+                                <div className="p-3 bg-emerald-500/10 rounded-xl">
+                                    <Phone className="text-emerald-400 w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-white mb-2">Call us</h4>
+                                    <p className="text-slate-200 font-semibold leading-relaxed mb-1">{BUSINESS.phoneDisplay}</p>
+                                    <p className="text-xs text-slate-500">Answered 24/7 in English & Spanish</p>
+                                </div>
+                            </a>
                         </div>
 
                         <div>

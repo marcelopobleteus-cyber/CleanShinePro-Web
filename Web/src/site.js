@@ -8,6 +8,9 @@ export const BUSINESS = {
     name: 'CleanShine Pro',
     legalName: 'CleanShine Pro LLC',
     email: 'contact@cleanshinepro.com',
+    // Linea de la recepcionista de voz (Vapi): contesta 24/7 en ingles y espanol
+    phone: '+14704921093',
+    phoneDisplay: '(470) 492-1093',
     street: '900 Buice Lake Pkwy',
     city: 'Woodstock',
     region: 'GA',

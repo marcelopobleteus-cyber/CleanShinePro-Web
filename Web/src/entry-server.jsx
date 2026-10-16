@@ -42,6 +42,7 @@ const business = () => ({
     legalName: BUSINESS.legalName,
     url: SITE_URL,
     email: BUSINESS.email,
+    telephone: BUSINESS.phone,
     image: `${SITE_URL}/og-image.png`,
     logo: `${SITE_URL}/logo.png`,
     priceRange: '$$',

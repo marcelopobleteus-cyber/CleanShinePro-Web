@@ -106,6 +106,7 @@ function App({ initialPath, pages = PAGES }) {
             <Link to={langTo} className="text-xs font-bold px-2 py-1 rounded border border-gray-200 text-slate-500 hover:text-emerald-600" hrefLang={lang === 'es' ? 'en' : 'es'}>
               {lang === 'es' ? 'EN' : 'ES'}
             </Link>
+            {BUSINESS_PHONE && <a href={`tel:${BUSINESS_PHONE}`} className="hidden lg:flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-emerald-700 whitespace-nowrap"><Phone className="w-4 h-4" aria-hidden="true" />(470) 492-1093</a>}
             <div className="hidden md:block"><TeamLogin t={{ navLogin: t.login, loginTitle: t.loginTitle, loginAssociate: t.loginAssociate, loginAssociateSub: t.loginAssociateSub, loginMaster: t.loginMaster, loginMasterSub: t.loginMasterSub }} /></div>
             <Link to="/quote" className="hidden sm:inline-block px-5 py-2.5 bg-[#0A2E5C] hover:bg-[#020617] text-white text-sm font-semibold rounded-full transition-all shadow-md">{t.quote}</Link>
             <button type="button" className="xl:hidden p-2 text-slate-700" aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>

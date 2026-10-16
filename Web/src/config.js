@@ -1,6 +1,6 @@
 // Telefono publico de CleanShine Pro, en formato E.164 (ej. '+16785551234').
 // Vacio = los botones de llamar no se muestran (antes marcaban +1 234 567 890, un numero de relleno).
-export const BUSINESS_PHONE = '';
+export const BUSINESS_PHONE = '+14704921093';
 
 // Acceso al sistema CleaningIQ desde la web (menu "Team login" y pie de pagina)
 // - Asociado: portal del equipo de CleanShine Pro, con su marca (dominio propio de la empresa)
