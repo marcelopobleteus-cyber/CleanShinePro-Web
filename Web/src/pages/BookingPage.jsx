@@ -5,6 +5,9 @@ import {
     ShieldCheck, FileText, Lock, Zap, Layers
 } from 'lucide-react';
 import { CLEANINGIQ_ORG_ID, callCleaningIQ, getAddons } from '../services/cleaningiq';
+import { getAttribution } from '../lib/attribution';
+
+const urlParam = (k) => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(k));
 
 // Datos que el motor de precios de CleaningIQ necesita (el servidor calcula; nunca recibe un precio).
 // Es el mismo motor que usan el panel de CleaningIQ y su cotizador: un solo precio en todas partes.
@@ -173,7 +176,7 @@ const serviceEngines = {
 
 const BookingPage = () => {
     // Al volver de Stripe Checkout la URL trae ?booking=success o ?booking=cancelled
-    const [paymentReturn] = useState(() => new URLSearchParams(window.location.search).get('booking'));
+    const [paymentReturn] = useState(() => urlParam('booking'));
     const [step, setStep] = useState(paymentReturn === 'success' ? 7 : 1);
     const [formData, setFormData] = useState({
         mainService: '',
@@ -226,6 +229,12 @@ const BookingPage = () => {
         if (paymentReturn) window.history.replaceState({}, '', window.location.pathname);
     }, [paymentReturn]);
     const calculationTimer = useRef(null);
+
+    // ZIP que viene de la portada (/quote?zip=30101): se completa al abrir (despues de cargar la pagina)
+    useEffect(() => {
+        const z = urlParam('zip');
+        if (/^\d{5}$/.test(z || '')) setFormData((f) => (f.zip ? f : { ...f, zip: z }));
+    }, []);
 
     useEffect(() => {
         getAddons().then(setCatalogAddons).catch(() => setCatalogAddons([]));
@@ -795,7 +804,7 @@ const BookingPage = () => {
             if (!currentLead) {
                 // No desbloqueo el precio en el paso 5: el lead se crea ahora
                 const created = await callCleaningIQ('web-lead', {
-                    action: 'quote', organization_id: CLEANINGIQ_ORG_ID,
+                    action: 'quote', organization_id: CLEANINGIQ_ORG_ID, attribution: getAttribution(),
                     contact: { name: formData.name, email: formData.email, phone: formData.phone },
                     quote_input: quoteInput
                 });
@@ -804,7 +813,7 @@ const BookingPage = () => {
             }
 
             const result = await callCleaningIQ('web-lead', {
-                action: 'book', organization_id: CLEANINGIQ_ORG_ID, lead_id: currentLead,
+                action: 'book', organization_id: CLEANINGIQ_ORG_ID, lead_id: currentLead, attribution: getAttribution(),
                 contact: { email: formData.email },
                 quote_input: quoteInput,
                 schedule: { date: formData.date, time: formData.time },
@@ -838,8 +847,8 @@ const BookingPage = () => {
             <div className="container mx-auto px-6 max-w-4xl">
 
                 <div className="text-center mb-12">
-                    <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Professional <span className="text-emerald-400">Booking</span></h1>
-                    <p className="text-slate-400 max-w-xl mx-auto">Get an instant, data-driven estimate based on professional standards and personnel logistics.</p>
+                    <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">Your exact <span className="text-emerald-400">cleaning price</span></h1>
+                    <p className="text-slate-400 max-w-xl mx-auto">Choose the service and enter your address. Your price comes from public property records and is set 5% below the local average. No phone call needed.</p>
                 </div>
 
                 <div className="flex justify-between mb-12 relative max-w-2xl mx-auto">
@@ -1202,6 +1211,7 @@ const BookingPage = () => {
                                                                                 const result = await callCleaningIQ('web-lead', {
                                                                                     action: 'quote',
                                                                                     organization_id: CLEANINGIQ_ORG_ID,
+                                                                                    attribution: getAttribution(),
                                                                                     contact: { name: formData.name, email: formData.email, phone: formData.phone },
                                                                                     quote_input: toQuoteInput(formData, isRecurringConverted)
                                                                                 });

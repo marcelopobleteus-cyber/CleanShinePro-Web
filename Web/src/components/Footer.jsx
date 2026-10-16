@@ -1,87 +1,68 @@
 import React from 'react';
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { BUSINESS } from '../site';
+import Link from './Link';
 import { ASSOCIATE_LOGIN_URL, MASTER_LOGIN_URL } from '../config';
+import { CITIES, cityPath } from '../site';
 
-const Footer = ({ onNavigate }) => {
+const T = {
+    en: { tag: 'Exact prices, vetted local teams and a photo report after every visit. Run on CleaningIQ.', company: 'Company', about: 'About', how: 'How it works', blog: 'Guides', contact: 'Contact', privacy: 'Privacy', partners: 'For cleaning companies', join: 'Join the partner network', apply: 'Apply in 3 minutes', cities: 'House cleaning', services: 'Services', quote: 'Get my price', all: 'All service areas' },
+    es: { tag: 'Precios exactos, equipos locales verificados y reporte con fotos en cada visita. Funciona con CleaningIQ.', company: 'Empresa', about: 'Nosotros', how: 'Cómo funciona', blog: 'Guías', contact: 'Contacto', privacy: 'Privacidad', partners: 'Para empresas de limpieza', join: 'Únete a la red de socios', apply: 'Postula en 3 minutos', cities: 'Limpieza de casas', services: 'Servicios', quote: 'Ver mi precio', all: 'Todas las zonas' },
+};
+
+const Footer = ({ lang = 'en' }) => {
+    const t = T[lang] || T.en;
+    const partners = lang === 'es' ? '/es/socios' : '/partners';
+    const linkCls = 'hover:text-emerald-400 transition-colors';
     return (
-        <footer className="bg-[#020617] text-white pt-20 pb-10 border-t border-white/5">
-            <div className="container mx-auto px-6">
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                    {/* Brand */}
-                    <div>
-                        <div className="mb-6">
-                            {/* White text logo for footer */}
-                            <div className="text-2xl font-bold font-heading cursor-pointer" onClick={() => onNavigate('home')}>CLEANSHINE <span className="text-emerald-400">PRO</span></div>
-                        </div>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            Setting the new standard in corporate and residential hygiene. Standardized excellence, insured professionals, and guaranteed results.
-                        </p>
-                        <div className="flex gap-4">
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors"><Facebook size={18} /></a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors"><Instagram size={18} /></a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors"><Linkedin size={18} /></a>
-                        </div>
+        <footer className="bg-[#020617] text-white pt-16 pb-10 border-t border-white/5">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-10 mb-12">
+                    <div className="col-span-2 lg:col-span-1">
+                        <Link to={lang === 'es' ? '/es' : '/'} className="text-2xl font-bold font-heading">CLEANSHINE <span className="text-emerald-400">PRO</span></Link>
+                        <p className="text-slate-400 text-sm leading-relaxed mt-4">{t.tag}</p>
                     </div>
-
-                    <div>
-                        <h4 className="font-bold text-lg mb-6">Company</h4>
+                    <nav aria-label="Company">
+                        <h2 className="font-bold mb-4">{t.company}</h2>
+                        <ul className="space-y-2 text-sm text-slate-400">
+                            <li><Link to="/about" className={linkCls}>{t.about}</Link></li>
+                            <li><Link to="/how-it-works" className={linkCls}>{t.how}</Link></li>
+                            <li><Link to="/services" className={linkCls}>{t.services}</Link></li>
+                            <li><Link to="/blog" className={linkCls}>{t.blog}</Link></li>
+                            <li><Link to="/contact" className={linkCls}>{t.contact}</Link></li>
+                            <li><Link to="/privacy" className={linkCls}>{t.privacy}</Link></li>
+                        </ul>
+                    </nav>
+                    <nav aria-label="Partners">
+                        <h2 className="font-bold mb-4">{t.partners}</h2>
+                        <ul className="space-y-2 text-sm text-slate-400">
+                            <li><Link to={partners} className={linkCls}>{t.join}</Link></li>
+                            <li><Link to={`${partners}#apply`} className={linkCls}>{t.apply}</Link></li>
+                            <li><Link to={lang === 'es' ? '/partners' : '/es/socios'} className={linkCls}>{lang === 'es' ? 'Partner program (English)' : 'Programa de socios (español)'}</Link></li>
+                        </ul>
+                    </nav>
+                    <nav aria-label="Cities">
+                        <h2 className="font-bold mb-4">{t.cities}</h2>
+                        <ul className="space-y-2 text-sm text-slate-400">
+                            {CITIES.slice(0, 6).map((c) => <li key={c.slug}><Link to={cityPath(c.slug)} className={linkCls}>{c.name}, GA</Link></li>)}
+                            <li><Link to="/service-areas" className={linkCls}>{t.all}</Link></li>
+                        </ul>
+                    </nav>
+                    <div className="col-span-2 lg:col-span-1">
+                        <h2 className="font-bold mb-4">{t.contact}</h2>
                         <ul className="space-y-3 text-sm text-slate-400">
-                            <li><button onClick={() => onNavigate('about')} className="hover:text-emerald-400 transition-colors text-left">About Us</button></li>
-                            <li><button onClick={() => onNavigate('process')} className="hover:text-emerald-400 transition-colors text-left">Our Process</button></li>
-                            <li><button onClick={() => onNavigate('blog')} className="hover:text-emerald-400 transition-colors text-left font-bold text-emerald-500">Expert Blog</button></li>
-                            <li><button onClick={() => onNavigate('contact')} className="hover:text-emerald-400 transition-colors text-left">Careers</button></li>
-                            <li><button onClick={() => onNavigate('service-areas')} className="hover:text-emerald-400 transition-colors text-left">All Service Areas</button></li>
-                            <li><button onClick={() => onNavigate('privacy')} className="hover:text-emerald-400 transition-colors text-left">Privacy Policy</button></li>
+                            <li className="flex items-start gap-2"><MapPin className="text-emerald-500 mt-0.5 shrink-0" size={16} /><span>900 Buice Lake Pkwy<br />Woodstock, GA 30188</span></li>
+                            <li className="flex items-center gap-2"><Phone className="text-emerald-500 shrink-0" size={16} /><a href={`tel:${BUSINESS.phone}`} className={linkCls}>{BUSINESS.phoneDisplay}</a></li>
+                            <li className="flex items-center gap-2"><Mail className="text-emerald-500 shrink-0" size={16} /><a href="mailto:contact@cleanshinepro.com" className={`${linkCls} break-all`}>contact@cleanshinepro.com</a></li>
                         </ul>
-                    </div>
-
-                    {/* Service Regions */}
-                    <div>
-                        <h4 className="font-bold text-lg mb-6">Service Localities</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li><button onClick={() => onNavigate('woodstock')} className="hover:text-emerald-400 transition-colors text-left">Woodstock, GA</button></li>
-                            <li><button onClick={() => onNavigate('acworth')} className="hover:text-emerald-400 transition-colors text-left">Acworth, GA</button></li>
-                            <li><button onClick={() => onNavigate('kennesaw')} className="hover:text-emerald-400 transition-colors text-left">Kennesaw, GA</button></li>
-                            <li><button onClick={() => onNavigate('marietta')} className="hover:text-emerald-400 transition-colors text-left">Marietta, GA</button></li>
-                            <li><button onClick={() => onNavigate('contact')} className="hover:text-emerald-400 transition-colors text-left italic">Request New City +</button></li>
-                        </ul>
-                    </div>
-
-                    {/* Services */}
-                    <div>
-                        <h4 className="font-bold text-lg mb-6">Services</h4>
-                        <ul className="space-y-3 text-sm text-slate-400">
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Commercial Cleaning</li>
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Office Medical Facilities</li>
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Airbnb Turnover</li>
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Post-Construction</li>
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Deep Residential</li>
-                            <li onClick={() => onNavigate('services')} className="hover:text-emerald-400 cursor-pointer">Move-In / Move-Out</li>
-                        </ul>
-                    </div>
-
-                    {/* Contact */}
-                    <div>
-                        <h4 className="font-bold text-lg mb-6">Contact</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                            <li className="flex items-start gap-3">
-                                <MapPin className="text-emerald-500 mt-0.5" size={18} />
-                                <span>900 Buice Lake Pkwy<br />Woodstock, GA 30188</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <Mail className="text-emerald-500" size={18} />
-                                <span>contact@cleanshinepro.com</span>
-                            </li>
-                        </ul>
+                        <Link to="/quote" className="inline-block mt-5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold">{t.quote}</Link>
                     </div>
                 </div>
-
                 <div className="border-t border-white/5 pt-8 text-center text-slate-500 text-sm">
-                    <p>&copy; {new Date().getFullYear()} CleanShine Pro LLC. All rights reserved. Fully Insured & Bonded.</p>
+                    <p>&copy; {new Date().getFullYear()} CleanShine Pro LLC. All rights reserved.</p>
                     <p className="mt-3 text-xs">
                         Team login:{' '}
-                        <a href={ASSOCIATE_LOGIN_URL} className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">Associate</a>
+                        <a href={ASSOCIATE_LOGIN_URL} className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">Partner</a>
                         {' · '}
                         <a href={MASTER_LOGIN_URL} className="text-violet-300 hover:text-violet-200 underline underline-offset-2">Master</a>
                     </p>
