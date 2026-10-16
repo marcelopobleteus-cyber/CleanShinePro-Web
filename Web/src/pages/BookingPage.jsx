@@ -11,13 +11,23 @@ const urlParam = (k) => (typeof window === 'undefined' ? null : new URLSearchPar
 
 // Datos que el motor de precios de CleaningIQ necesita (el servidor calcula; nunca recibe un precio).
 // Es el mismo motor que usan el panel de CleaningIQ y su cotizador: un solo precio en todas partes.
+// Direccion completa: calle + unidad, en el mismo formato que usa CleaningIQ ("120 Main St Apt 4")
+const UNIT_TAIL = /[,\s]+(?:(?:apartment|apt|unit|suite|ste)(?:\.\s*|\s+)#?\s*|#\s*)[a-z0-9][a-z0-9-]*\s*$/i;
+const cleanUnit = (u) => String(u || '').replace(/^(?:apartment|apt|unit|suite|ste)\.?\s*#?\s*|^#\s*/i, '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 12);
+function fullAddress(data) {
+    const street = String(data.address || '').trim();
+    const unit = cleanUnit(data.unit);
+    if (!unit) return street;
+    return `${street.replace(UNIT_TAIL, '').trim()} Apt ${unit}`;
+}
+
 function toQuoteInput(data, recurringConversion) {
     return {
         mainService: data.mainService, subService: data.subService,
         sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
         extras: data.extras, basementType: data.basementType, levels: data.levels,
         quoteMode: data.quoteMode, roomSelection: data.roomSelection,
-        zip: data.zip, address: data.address || undefined,
+        zip: data.zip, address: fullAddress(data) || undefined,
         recurringConversion
     };
 }
@@ -191,6 +201,7 @@ const BookingPage = () => {
         email: '',
         phone: '',
         address: '',
+        unit: '',
         city: 'Woodstock',
         zip: '',
         basementType: 'none',
@@ -210,6 +221,8 @@ const BookingPage = () => {
 
     const [errors, setErrors] = useState(paymentReturn === 'cancelled' ? { general: 'Payment was cancelled. You can request a new quote or contact us.' } : {});
     const [estimatedPrice, setEstimatedPrice] = useState(null);
+    // Sin pies cuadrados (u otro dato) el motor devuelve un rango: se muestra el rango y la oficina confirma el precio exacto
+    const isRange = estimatedPrice?.precision === 'range';
     const [priceError, setPriceError] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -263,10 +276,9 @@ const BookingPage = () => {
     const pickUnit = (unit) => {
         const u = (homeLookup?.units || []).find((x) => x.unit === unit);
         if (!u) return;
-        const street = (formData.address || '').replace(/[,\s]+(?:(?:apartment|apt|unit|suite|ste)(?:\.\s*|\s+)#?\s*|#\s*)[a-z0-9][a-z0-9-]*\s*$/i, '').trim();
         setFormData(prev => ({
             ...prev,
-            address: `${street} Apt ${u.unit}`,
+            unit: u.unit,
             sqft: u.sqft ? String(u.sqft) : prev.sqft,
             beds: u.bedrooms != null ? String(Math.min(Math.max(Math.round(u.bedrooms), 1), 6)) : prev.beds,
             baths: u.bathrooms != null ? String(Math.min(Math.max(Math.round(u.bathrooms * 2) / 2, 1), 5)) : prev.baths,
@@ -338,7 +350,8 @@ const BookingPage = () => {
                     isValid = false;
                 }
             } else {
-                if (!formData.sqft || formData.sqft < 100) { newErrors.sqft = "Valid square footage required (min 100)"; isValid = false; }
+                // Los pies cuadrados son opcionales: sin ellos el motor calcula un rango y la oficina confirma el precio exacto
+                if (formData.sqft !== '' && formData.sqft != null && Number(formData.sqft) < 100) { newErrors.sqft = "If you know it, enter at least 100 sq ft (or leave it blank)"; isValid = false; }
                 if (formData.mainService === 'residential' || formData.mainService === 'short_term') {
                     if (!formData.beds) { newErrors.beds = "Bedrooms required"; isValid = false; }
                     if (!formData.baths) { newErrors.baths = "Bathrooms required"; isValid = false; }
@@ -439,7 +452,7 @@ const BookingPage = () => {
         const addonLines = (estimatedPrice?.addons || []).map(a => ({ desc: `Add-on: ${a.name}`, qty: 1, price: a.price }));
 
         const itemsList = [
-            { desc: serviceTitle + (formData.quoteMode === 'AREAS' ? ' (Area-Based Protocol)' : ` (${formData.sqft} SQFT)`), qty: 1, price: estimatedPrice?.base },
+            { desc: serviceTitle + (formData.quoteMode === 'AREAS' ? ' (Area-Based Protocol)' : formData.sqft ? ` (${formData.sqft} SQFT)` : ''), qty: 1, price: estimatedPrice?.base },
             ...areaLines,
             ...addonLines,
             ...(estimatedPrice?.tax > 0 ? [{ desc: 'Sales tax', qty: 1, price: estimatedPrice.tax }] : [])
@@ -667,7 +680,7 @@ const BookingPage = () => {
                                         <h4 class="info-title">Prepared For:</h4>
                                         <div class="info-details">
                                             <div class="customer-name">${formData.name}</div>
-                                            <div style="color: #475569; font-weight: 600;">${formData.address}</div>
+                                            <div style="color: #475569; font-weight: 600;">${fullAddress(formData)}</div>
                                             <div style="color: #64748b; margin-top: 4px;">${formData.email}</div>
                                             <div style="color: #64748b;">${formData.phone}</div>
                                         </div>
@@ -785,7 +798,7 @@ const BookingPage = () => {
                 _subject: `New Booking Request: ${formData.name} — ${formData.date} ${formData.time}`,
                 _template: "table",
                 name: formData.name, email: formData.email, phone: formData.phone,
-                address: formData.address, date: formData.date, time: formData.time,
+                address: fullAddress(formData), date: formData.date, time: formData.time,
                 service: `${formData.mainService} / ${formData.subService}`,
                 total: `$${quote.total}`, deposit_due: `$${quote.deposit}`
             })
@@ -947,10 +960,14 @@ const BookingPage = () => {
                                     )}
                                 </div>
 
-                                <div className="grid md:grid-cols-3 gap-4">
+                                <div className="grid md:grid-cols-4 gap-4">
                                     <div className="space-y-2 md:col-span-2">
                                         <label htmlFor="bp-street" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Property Street Address</label>
                                         <input id="bp-street" type="text" name="address" autoComplete="street-address" value={formData.address} onChange={handleChange} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 120 Main St" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="bp-apt" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Apt / Unit</label>
+                                        <input id="bp-apt" type="text" name="unit" autoComplete="address-line2" maxLength={12} value={formData.unit} onChange={handleChange} className={`w-full bg-white/5 border ${homeLookup?.status === 'multi' && !formData.unit ? 'border-amber-400/60' : 'border-white/10'} rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold`} placeholder="e.g. 3208" />
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="bp-zip" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">ZIP Code</label>
@@ -958,17 +975,17 @@ const BookingPage = () => {
                                         {errors.zip && <p className="text-red-400 text-xs font-bold">{errors.zip}</p>}
                                     </div>
                                     {homeLookup && (
-                                        <p className="md:col-span-3 text-xs font-bold" role="status" aria-live="polite">
+                                        <p className="md:col-span-4 text-xs font-bold" role="status" aria-live="polite">
                                             {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
                                             {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
                                             {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
-                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : 'Please enter the size and rooms of your unit below.'}</span>}
+                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : (formData.unit ? 'Enter the rooms of your unit below (the size is optional).' : 'Add your apartment number and enter the rooms of your unit below (the size is optional).')}</span>}
                                         </p>
                                     )}
                                     {homeLookup && homeLookup.units?.length > 1 && (
-                                        <div className="md:col-span-3 space-y-2">
+                                        <div className="md:col-span-4 space-y-2">
                                             <label htmlFor="bp-unit" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Your unit ({homeLookup.units.length} in this building)</label>
-                                            <select id="bp-unit" value={homeLookup.unit || ''} onChange={(e) => pickUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-bold">
+                                            <select id="bp-unit" value={homeLookup.units.some((u) => u.unit === formData.unit) ? formData.unit : ''} onChange={(e) => pickUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-bold">
                                                 <option value="" className="bg-[#020617]">Select your unit…</option>
                                                 {homeLookup.units.map((u) => (
                                                     <option key={u.unit} value={u.unit} className="bg-[#020617]">
@@ -1029,9 +1046,10 @@ const BookingPage = () => {
                                 ) : (
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Approximate Square Footage</label>
-                                            <input type="number" name="sqft" value={formData.sqft} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-xl font-bold" placeholder="e.g. 2500" />
-                                            {errors.sqft && <p className="text-red-400 text-xs font-bold">{errors.sqft}</p>}
+                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Approximate Square Footage <span className="normal-case tracking-normal font-medium text-slate-500">(optional)</span></label>
+                                            <input type="number" name="sqft" min="100" value={formData.sqft} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-xl font-bold" placeholder="Not sure? Leave it blank" />
+                                            {errors.sqft ? <p className="text-red-400 text-xs font-bold">{errors.sqft}</p>
+                                                : !formData.sqft && <p className="text-slate-500 text-xs">Don't know it? No problem: you'll see a price range and we confirm the exact price before your visit.</p>}
                                         </div>
 
                                         {(formData.mainService === 'residential' || formData.mainService === 'short_term') && (
@@ -1265,11 +1283,11 @@ const BookingPage = () => {
                                                 <div className="grid lg:grid-cols-2 gap-10">
                                                     <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900 border border-indigo-500/30 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
                                                         <div className="relative z-10 space-y-6">
-                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">UNLOCKED: Your Exact Quote</span>
+                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">{isRange ? 'UNLOCKED: Your Price Range' : 'UNLOCKED: Your Exact Quote'}</span>
                                                             <div className="space-y-1">
-                                                                <h4 className="text-6xl font-black text-white tracking-tighter">${estimatedPrice.total}</h4>
-                                                                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] animate-pulse">
-                                                                    Verified Fixed-Price Guarantee
+                                                                <h4 className={`${isRange ? 'text-5xl' : 'text-6xl'} font-black text-white tracking-tighter`}>{isRange ? `$${estimatedPrice.range_low} – $${estimatedPrice.range_high}` : `$${estimatedPrice.total}`}</h4>
+                                                                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em]">
+                                                                    {isRange ? 'We confirm the exact price with you before the visit' : 'Verified Fixed-Price Guarantee'}
                                                                 </p>
                                                             </div>
 
@@ -1325,7 +1343,8 @@ const BookingPage = () => {
                                                         <div key={a.code} className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">+ {a.name}</span><span className="text-white">${a.price}</span></div>
                                                     ))}
                                                     {estimatedPrice.tax > 0 && <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">Sales tax</span><span className="text-white">${estimatedPrice.tax}</span></div>}
-                                                    <div className="flex justify-between pt-1"><span className="text-emerald-400 font-black uppercase tracking-widest text-xs">Total (travel included)</span><span className="text-2xl font-black text-white">${estimatedPrice.total}</span></div>
+                                                    <div className="flex justify-between pt-1"><span className="text-emerald-400 font-black uppercase tracking-widest text-xs">{isRange ? 'Estimated total (travel included)' : 'Total (travel included)'}</span><span className="text-2xl font-black text-white">${estimatedPrice.total}</span></div>
+                                                    {isRange && <p className="text-xs text-slate-400">Estimate based on the rooms you entered. The office confirms the exact price with you before the visit.</p>}
                                                     <div className="flex justify-between text-xs"><span className="text-slate-500">Deposit to book</span><span className="text-slate-300 font-bold">${estimatedPrice.deposit}</span></div>
                                                 </div>
                                             </div>
@@ -1366,7 +1385,10 @@ const BookingPage = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase">Service Address</label>
-                                                    <input type="text" name="address" value={formData.address} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Street, Woodstock, GA" />
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <input type="text" name="address" aria-label="Street" value={formData.address} onChange={handleChange} className="col-span-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Street, Woodstock, GA" />
+                                                        <input type="text" name="unit" aria-label="Apt / Unit" maxLength={12} value={formData.unit} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Apt / Unit" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
