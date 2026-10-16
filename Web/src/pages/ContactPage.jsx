@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { Send, MapPin, Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import { CLEANINGIQ_ORG_ID, callCleaningIQ } from '../services/cleaningiq';
+import { getAttribution } from '../lib/attribution';
+import Link from '../components/Link';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        serviceType: 'Commercial Cleaning',
+        serviceType: 'Home cleaning',
         message: ''
     });
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [sendError, setSendError] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,6 +31,7 @@ const ContactPage = () => {
                 contact: { name: formData.name, email: formData.email },
                 service_interest: formData.serviceType,
                 message: formData.message,
+                attribution: getAttribution(),
             }),
             fetch("https://formsubmit.co/ajax/contact@cleanshinepro.com", {
                 method: "POST",
@@ -49,22 +53,22 @@ const ContactPage = () => {
         if (lead.status === 'fulfilled' || email.status === 'fulfilled') {
             setSubmitted(true);
         } else {
-            alert("There was an error sending your message. Please try again or contact us directly at contact@cleanshinepro.com");
+            setSendError("There was an error sending your message. Please try again or write to contact@cleanshinepro.com");
         }
         setIsSubmitting(false);
     };
 
     return (
-        <div className="bg-[#020617] text-white min-h-screen pt-12 pb-24 font-sans">
+        <div className="bg-[#020617] text-white min-h-screen pt-12 pb-24 font-sans overflow-x-hidden">
 
             {/* Header */}
             <div className="container mx-auto px-6 text-center mb-20 relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[300px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none"></div>
                 <h1 className="relative z-10 text-4xl md:text-6xl font-bold mb-6 font-heading tracking-tight">
                     Get in <span className="text-emerald-400">Touch</span>
                 </h1>
                 <p className="relative z-10 text-slate-400 max-w-2xl mx-auto text-lg font-light">
-                    Ready to elevate your standards? Fill out the form below and receiving a custom proposal within 24 hours.
+                    Questions about a cleaning, an office contract or the partner program? Send us a message in English or Spanish. For a home cleaning, the fastest way is the online quote.
                 </p>
             </div>
 
@@ -100,7 +104,7 @@ const ContactPage = () => {
                                 <div>
                                     <h4 className="font-bold text-lg text-white mb-2">Digital Inquiries</h4>
                                     <p className="text-slate-400 leading-relaxed mb-1">contact@cleanshinepro.com</p>
-                                    <p className="text-xs text-slate-500">24/7 Monitoring</p>
+                                    <p className="text-xs text-slate-500">English & Spanish</p>
                                 </div>
                             </div>
                         </div>
@@ -109,10 +113,10 @@ const ContactPage = () => {
                             <h4 className="font-bold text-xl mb-4">Why Choose Us?</h4>
                             <ul className="space-y-3">
                                 {[
-                                    "Fully Insured & Bonded",
-                                    "AI-Driven Quality Control",
-                                    "Hospital-Grade Disinfectants",
-                                    "Zero-Liability Guarantee"
+                                    "Exact price online, no surprises at the door",
+                                    "Vetted local teams with their own liability insurance",
+                                    "GPS check-in and a photo report after every visit",
+                                    "Free re-clean if you tell us within 24 hours"
                                 ].map((item, i) => (
                                     <li key={i} className="flex items-center gap-3 text-slate-300">
                                         <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
@@ -179,8 +183,10 @@ const ContactPage = () => {
                                         value={formData.serviceType}
                                         onChange={handleChange}
                                     >
+                                        <option>Home cleaning</option>
                                         <option>Commercial Cleaning</option>
-                                        <option>Office Medical Facilities</option>
+                                        <option>Partner program (cleaning companies)</option>
+                                        <option>Medical or dental office</option>
                                         <option>Airbnb Turnover</option>
                                         <option>Residential Deep Clean</option>
                                         <option>Post-Construction</option>
@@ -201,6 +207,7 @@ const ContactPage = () => {
                                     ></textarea>
                                 </div>
 
+                                {sendError && <p className="text-amber-300 text-sm" role="alert">{sendError}</p>}
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}

@@ -1,274 +1,130 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import Hero from './components/Hero';
-import TrustBar from './components/TrustBar';
-import Services from './components/Services';
-import Process from './components/Process';
-import Testimonials from './components/Testimonials';
+import { Menu, X, Phone } from 'lucide-react';
 import Footer from './components/Footer';
 import TeamLogin from './components/TeamLogin';
-import FAQ from './components/FAQ';
+import Link from './components/Link';
+import HomePage from './pages/HomePage';
 import { BUSINESS_PHONE } from './config';
-import { Phone, ArrowRight } from 'lucide-react';
+import { routeFor, pathForPage } from './site';
+import { navigate, onNavigate, scrollToHash } from './lib/router';
+import { captureAttribution } from './lib/attribution';
+import { PAGE_LOADERS } from './pages/loaders';
 
-// Chat SHINE oculto: su llave de Gemini no esta configurada y respondia "offline (Config Error)".
-// Se reactiva cuando pase por una funcion del servidor (la llave no puede ir en el navegador).
-const SHOW_ASSISTANT = false;
-
-// La portada se descarga sola; el resto de las paginas cuando se abren
-const loadBooking = () => import('./pages/BookingPage');
-const BookingPage = lazy(loadBooking);
-const ServicesPage = lazy(() => import('./pages/ServicesPage'));
-const ProcessPage = lazy(() => import('./pages/ProcessPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
-const ServiceAreasPage = lazy(() => import('./pages/ServiceAreasPage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
-const BlogPage = lazy(() => import('./pages/BlogPage'));
-const LocalServicePage = lazy(() => import('./pages/LocalServicePage'));
-const CommercialAssistant = lazy(() => import('./components/CommercialAssistant'));
+const PAGES = Object.fromEntries(Object.entries(PAGE_LOADERS).map(([k, load]) => [k, lazy(load)]));
 
 const PageLoading = () => <div className="min-h-[60vh]" aria-busy="true" />;
 
-function App() {
-  // Al volver de Stripe Checkout (?booking=...) se abre directamente la reserva
-  const [currentPage, setCurrentPage] = useState(() => new URLSearchParams(window.location.search).get('booking') ? 'booking' : 'home');
-  const [bookingData, setBookingData] = useState(null);
-  const [lang, setLang] = useState('en'); // 'en' or 'es'
+const NAV = {
+  en: { home: 'Home', services: 'Services', how: 'How it works', partners: 'For cleaning companies', areas: 'Service areas', contact: 'Contact', quote: 'Get my price', login: 'Team login',
+    loginTitle: 'Sign in to the system', loginAssociate: 'Partner', loginAssociateSub: 'CleanShine Pro partner portal', loginMaster: 'Master', loginMasterSub: 'CleaningIQ · all accounts' },
+  es: { home: 'Inicio', services: 'Servicios', how: 'Cómo funciona', partners: 'Para empresas de limpieza', areas: 'Zonas', contact: 'Contacto', quote: 'Ver mi precio', login: 'Acceso equipo',
+    loginTitle: 'Entrar al sistema', loginAssociate: 'Socio', loginAssociateSub: 'Portal de socios de CleanShine Pro', loginMaster: 'Master', loginMasterSub: 'CleaningIQ · todas las cuentas' },
+};
 
-  const translations = {
-    en: {
-      promo: "Get a discount percentage on your first service by signing up for one of our plans!",
-      navHome: "Home",
-      navAbout: "About",
-      navServices: "Services",
-      navProcess: "Process",
-      navContact: "Contact",
-      btnQuote: "Get Quote",
-      navLogin: "Team login",
-      loginTitle: "Sign in to the system",
-      loginAssociate: "Associate",
-      loginAssociateSub: "CleanShine Pro team portal",
-      loginMaster: "Master",
-      loginMasterSub: "CleaningIQ · all accounts"
-    },
-    es: {
-      promo: "Obtén un porcentaje de descuento en tu primer servicio contratando algunos de nuestros planes!",
-      navHome: "Inicio",
-      navAbout: "Nosotros",
-      navServices: "Servicios",
-      navProcess: "Proceso",
-      navContact: "Contacto",
-      btnQuote: "Cotizar",
-      navLogin: "Acceso equipo",
-      loginTitle: "Entrar al sistema",
-      loginAssociate: "Asociado",
-      loginAssociateSub: "Portal del equipo de CleanShine Pro",
-      loginMaster: "Master",
-      loginMasterSub: "CleaningIQ · todas las cuentas"
-    }
-  };
+function currentUrl(initialPath) {
+  if (typeof window === 'undefined') return initialPath || '/';
+  // Al volver de Stripe Checkout (?booking=...) se abre la reserva
+  if (new URLSearchParams(window.location.search).get('booking')) return '/quote';
+  return window.location.pathname;
+}
 
-  const t = translations[lang];
+// `pages` permite al prerender usar las paginas ya cargadas (sin React.lazy)
+function App({ initialPath, pages = PAGES }) {
+  const [path, setPath] = useState(() => currentUrl(initialPath));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const route = routeFor(path);
+  const lang = route.lang === 'es' ? 'es' : 'en';
+  const t = NAV[lang];
 
-  // El cotizador es la pagina que mas importa: se descarga en segundo plano apenas
-  // termina de cargar la portada, asi "Get Quote" abre al instante
   useEffect(() => {
-    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
-    idle(() => { loadBooking().catch(() => {}); });
+    captureAttribution();
+    return onNavigate(() => {
+      setPath(window.location.pathname);
+      setMenuOpen(false);
+      scrollToHash();
+    });
   }, []);
 
-  const handleNavigate = (page, data = null) => {
-    setCurrentPage(page);
-    if (page === 'booking') {
-      setBookingData(data);
-    } else {
-      setBookingData(null);
-    }
+  // Titulo y descripcion de cada pagina al navegar dentro del sitio (el HTML inicial ya los trae del prerender)
+  useEffect(() => {
+    document.title = route.title;
+    document.documentElement.lang = lang;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute('content', route.description);
+  }, [route, lang]);
 
-    // Dynamic SEO Titles
-    const titles = {
-      home: "Professional House Cleaning Woodstock GA | CleanShine Pro llc",
-      services: "Cleaning Services in Woodstock & Kennesaw | CleanShine Pro",
-      process: "Our 6-Step Cleaning Process | CleanShine Pro Quality",
-      booking: "Get a Free Cleaning Estimate | CleanShine Pro Premium Engine",
-      about: "About CleanShine Pro | Licensed & Insured Cleaning North GA",
-      contact: "Contact CleanShine Pro | Cleaning Services in Canton & Marietta",
-      blog: "Cleaning Insights & Maintenance Tips | CleanShine Pro Blog",
-      woodstock: "Best House Cleaning Woodstock GA | Top-Rated Home Cleaners",
-      acworth: "Professional Cleaning Services Acworth GA | CleanShine Pro",
-      kennesaw: "Deep Cleaning Specialists Kennesaw GA | Guaranteed Results",
-      marietta: "Marietta GA Cleaning Pros | Elite Home & Office Detailing"
-    };
-    if (titles[page]) document.title = titles[page];
+  // El cotizador es la pagina que mas importa: se descarga en segundo plano
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+    idle(() => { PAGE_LOADERS.booking().catch(() => {}); });
+  }, []);
 
-    window.scrollTo(0, 0);
-  };
+  // Compatibilidad con componentes que llaman onNavigate('services')
+  const goPage = (page) => navigate(pathForPage(page, lang));
 
   const renderPage = () => {
-    switch (currentPage) {
-      case 'services':
-        return <ServicesPage onNavigate={handleNavigate} />;
-      case 'service-areas':
-        return <ServiceAreasPage onNavigate={handleNavigate} />;
-      case 'process':
-        return <ProcessPage onNavigate={handleNavigate} />;
-      case 'contact':
-        return <ContactPage />;
-      case 'about':
-        return <AboutPage onNavigate={handleNavigate} />;
-      case 'privacy':
-        return <PrivacyPage />;
-
-      case 'booking':
-        return <BookingPage initialData={bookingData} />;
-      case 'blog':
-        return <BlogPage onNavigate={handleNavigate} />;
-      case 'woodstock':
-      case 'acworth':
-      case 'kennesaw':
-      case 'marietta':
-        return <LocalServicePage city={currentPage} onNavigate={handleNavigate} />;
-      default:
-        return (
-          <>
-            <Hero onNavigate={handleNavigate} lang={lang} t={t} />
-            <TrustBar />
-            <Services onNavigate={handleNavigate} />
-
-            {/* Mid-Page CTA */}
-            <section className="py-20 bg-gradient-to-r from-emerald-900/10 to-blue-900/10 border-y border-white/5">
-              <div className="container mx-auto px-6 text-center">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready for a Cleaner, Healthier Space?</h2>
-                <p className="text-slate-400 mb-8 max-w-xl mx-auto">Join hundreds of satisfied Woodstock residents who have reclaimed their time and peace of mind.</p>
-                <button onClick={() => handleNavigate('booking')} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-emerald-500/30">
-                  Get Your Free Estimate
-                </button>
-              </div>
-            </section>
-
-            <Process />
-            <Testimonials />
-
-            <FAQ />
-
-            {/* Bottom Final CTA / Lead Form Hook */}
-            <section className="py-24 bg-[#0B1121] border-t border-white/5 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full bg-emerald-500/5 blur-3xl pointer-events-none"></div>
-              <div className="container mx-auto px-6 max-w-5xl relative z-10">
-                <div className="grid md:grid-cols-2 gap-16 items-center">
-                  <div>
-                    <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Fast, Reliable & <span className="text-emerald-400">Guaranteed.</span></h2>
-                    <p className="text-slate-400 mb-8 text-lg">
-                      Whether it's a deep home clean or daily office maintenance, we bring the same level of precision and care to every job.
-                    </p>
-                    <ul className="space-y-4 mb-8">
-                      <li className="flex items-center gap-3 text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
-                        Licensed, Bonded & Insured
-                      </li>
-                      <li className="flex items-center gap-3 text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
-                        100% Satisfaction Guarantee
-                      </li>
-                      <li className="flex items-center gap-3 text-slate-300">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">✓</div>
-                        Eco-Friendly & Pet-Safe Products
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-[#020617] p-8 rounded-3xl border border-white/10 shadow-2xl">
-                    <h3 className="text-2xl font-bold text-white mb-6">Request a Quick Call</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Name</label>
-                        <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors" placeholder="John Doe" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Phone</label>
-                        <input type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors" placeholder="(123) 456-7890" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Service</label>
-                        <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors appearance-none">
-                          <option className="bg-[#020617]">Residential Cleaning</option>
-                          <option className="bg-[#020617]">Commercial Cleaning</option>
-                          <option className="bg-[#020617]">Move-In/Out</option>
-                          <option className="bg-[#020617]">Airbnb Turnover</option>
-                        </select>
-                      </div>
-                      <button onClick={() => handleNavigate('contact')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 mt-4 group">
-                        Send Request <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                      </button>
-                      <p className="text-center text-[10px] text-slate-500 mt-4 italic">By clicking "Send Request", you agree to be contacted via call/text. No spam, ever.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </>
-        );
-    }
+    if (route.page === 'home') return <HomePage lang={lang} />;
+    const Page = pages[route.page] || pages.notfound;
+    return <Page onNavigate={goPage} lang={lang} city={route.city} post={route.post} />;
   };
+
+  const links = [
+    { to: lang === 'es' ? '/es' : '/', label: t.home, page: 'home' },
+    { to: '/services', label: t.services, page: 'services' },
+    { to: '/how-it-works', label: t.how, page: 'process' },
+    { to: '/service-areas', label: t.areas, page: 'service-areas' },
+    { to: '/contact', label: t.contact, page: 'contact' },
+  ];
+  const partnersTo = lang === 'es' ? '/es/socios' : '/partners';
+  const langTo = route.alt || (lang === 'es' ? '/' : '/es');
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020617]">
-      {/* Sticky Mobile Call Button */}
       {BUSINESS_PHONE && (
         <div className="md:hidden fixed bottom-6 right-6 z-[60]">
-          <a
-            href={`tel:${BUSINESS_PHONE}`}
-            aria-label="Call CleanShine Pro"
-            className="flex items-center justify-center w-14 h-14 bg-emerald-500 text-white rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-bounce"
-          >
+          <a href={`tel:${BUSINESS_PHONE}`} aria-label="Call CleanShine Pro" className="flex items-center justify-center w-14 h-14 bg-emerald-500 text-white rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]">
             <Phone className="w-6 h-6" />
           </a>
         </div>
       )}
-      {/* Navigation - White Strip */}
-      <nav className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 py-4 shadow-sm transition-all duration-300">
-        <div className="container mx-auto px-6 flex justify-between items-center">
-          {/* Enhanced Logo Visibility */}
-          <div className="flex items-center cursor-pointer" onClick={() => handleNavigate('home')}>
-            <img
-              src="/logo.png"
-              alt="CleanShine Pro"
-              className="h-20 md:h-24 w-auto object-contain hover:brightness-110 transition-all duration-300"
-            />
+
+      <header className="bg-white/95 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <nav className="container mx-auto px-4 md:px-6 py-3 flex justify-between items-center gap-4" aria-label="Main">
+          <Link to={lang === 'es' ? '/es' : '/'} className="flex items-center shrink-0" aria-label="CleanShine Pro home">
+            <img src="/logo.png" alt="CleanShine Pro" width="160" height="64" className="h-14 md:h-16 w-auto object-contain" />
+          </Link>
+
+          <div className="hidden xl:flex items-center gap-5 text-sm font-medium text-slate-600">
+            {links.map((l) => (
+              <Link key={l.to} to={l.to} className={`hover:text-emerald-600 transition-colors ${route.page === l.page ? 'text-emerald-600 font-bold' : ''}`}>{l.label}</Link>
+            ))}
+            <Link to={partnersTo} className={`px-3 py-1.5 rounded-full border border-emerald-600/40 text-emerald-700 hover:bg-emerald-50 font-semibold ${route.page === 'partners' ? 'bg-emerald-50' : ''}`}>{t.partners}</Link>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600">
-              <button onClick={() => handleNavigate('home')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'home' ? 'text-emerald-600 font-bold' : ''}`}>{t.navHome}</button>
-              <button onClick={() => handleNavigate('about')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'about' ? 'text-emerald-600 font-bold' : ''}`}>{t.navAbout}</button>
-              <button onClick={() => handleNavigate('services')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'services' ? 'text-emerald-600 font-bold' : ''}`}>{t.navServices}</button>
-              <button onClick={() => handleNavigate('process')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'process' ? 'text-emerald-600 font-bold' : ''}`}>{t.navProcess}</button>
-              <button onClick={() => handleNavigate('contact')} className={`hover:text-emerald-600 transition-colors ${currentPage === 'contact' ? 'text-emerald-600 font-bold' : ''}`}>{t.navContact}</button>
-            </div>
-
-            <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
-              <button
-                onClick={() => setLang('en')}
-                className={`text-xs font-bold px-2 py-1 rounded ${lang === 'en' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-600'}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLang('es')}
-                className={`text-xs font-bold px-2 py-1 rounded ${lang === 'es' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-emerald-600'}`}
-              >
-                ES
-              </button>
-            </div>
-
-            <TeamLogin t={t} />
-
-            <button onClick={() => handleNavigate('booking')} className="hidden md:block px-6 py-2.5 bg-[#0A2E5C] hover:bg-[#020617] text-white text-sm font-semibold rounded-full transition-all shadow-md hover:shadow-lg">
-              {t.btnQuote}
+          <div className="flex items-center gap-3">
+            <Link to={langTo} className="text-xs font-bold px-2 py-1 rounded border border-gray-200 text-slate-500 hover:text-emerald-600" hrefLang={lang === 'es' ? 'en' : 'es'}>
+              {lang === 'es' ? 'EN' : 'ES'}
+            </Link>
+            <div className="hidden md:block"><TeamLogin t={{ navLogin: t.login, loginTitle: t.loginTitle, loginAssociate: t.loginAssociate, loginAssociateSub: t.loginAssociateSub, loginMaster: t.loginMaster, loginMasterSub: t.loginMasterSub }} /></div>
+            <Link to="/quote" className="hidden sm:inline-block px-5 py-2.5 bg-[#0A2E5C] hover:bg-[#020617] text-white text-sm font-semibold rounded-full transition-all shadow-md">{t.quote}</Link>
+            <button type="button" className="xl:hidden p-2 text-slate-700" aria-label="Menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((o) => !o)}>
+              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
-        </div>
-      </nav>
+        </nav>
+        {menuOpen && (
+          <div className="xl:hidden border-t border-gray-200 bg-white">
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
+              {links.map((l) => (
+                <Link key={l.to} to={l.to} className="py-3 px-2 text-slate-700 font-medium border-b border-gray-100">{l.label}</Link>
+              ))}
+              <Link to={partnersTo} className="py-3 px-2 text-emerald-700 font-bold border-b border-gray-100">{t.partners}</Link>
+              <Link to="/quote" className="mt-3 py-3 text-center bg-emerald-600 text-white font-bold rounded-xl">{t.quote}</Link>
+            </div>
+          </div>
+        )}
+      </header>
 
       <main className="flex-grow">
         <Suspense fallback={<PageLoading />}>
@@ -276,12 +132,7 @@ function App() {
         </Suspense>
       </main>
 
-      {SHOW_ASSISTANT && (
-        <Suspense fallback={null}>
-          <CommercialAssistant lang={lang} t={t} />
-        </Suspense>
-      )}
-      <Footer onNavigate={handleNavigate} />
+      <Footer lang={lang} />
       <Analytics />
     </div>
   );

@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { PAGE_LOADERS } from './pages/loaders'
+import { routeFor } from './site'
 
 // Tras publicar una version nueva, las paginas viejas ya no existen en el servidor: si una
 // no carga, se recarga la pagina una vez para tomar la version nueva (sin entrar en bucle).
@@ -17,8 +19,15 @@ window.addEventListener('vite:preloadError', (event) => {
   window.location.reload()
 })
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const container = document.getElementById('root')
+const app = <StrictMode><App /></StrictMode>
+
+// El HTML ya viene armado desde la compilacion (prerender): se baja primero la pagina actual
+// y despues React toma el control sin volver a dibujar nada.
+const route = routeFor(new URLSearchParams(window.location.search).get('booking') ? '/quote' : window.location.pathname)
+const load = PAGE_LOADERS[route.page]
+const ready = load ? load().catch(() => null) : Promise.resolve()
+ready.then(() => {
+  if (container.hasChildNodes()) hydrateRoot(container, app)
+  else createRoot(container).render(app)
+})

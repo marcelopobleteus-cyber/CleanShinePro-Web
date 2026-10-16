@@ -1,100 +1,80 @@
 import React from 'react';
-import { Shield, Check, Clock, MapPin, Star, Building2, Home, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Home, Sparkles, Truck, Building2, Check } from 'lucide-react';
+import Link from '../components/Link';
+import { CITIES, cityPath } from '../site';
 
-const LocalServicePage = ({ city, onNavigate }) => {
-    const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+const SERVICES = [
+    { icon: Home, t: 'Recurring house cleaning', d: 'Weekly, biweekly or monthly, with the same checklist every visit.' },
+    { icon: Sparkles, t: 'Deep cleaning', d: 'Baseboards, inside appliances, grout and detail work.' },
+    { icon: Truck, t: 'Move-in / move-out', d: 'Empty-home cleaning with a photo report for your deposit.' },
+    { icon: Building2, t: 'Office cleaning', d: 'Small offices, clinics and retail, with a log of every visit.' },
+];
 
+export default function LocalServicePage({ city }) {
+    const c = CITIES.find((x) => x.slug === city) || CITIES[0];
+    const near = c.near.map((s) => CITIES.find((x) => x.slug === s)).filter(Boolean);
     return (
-        <div className="min-h-screen bg-[#020617] text-white pt-32 pb-20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                {/* Hero Section */}
-                <div className="grid lg:grid-cols-2 gap-16 items-center mb-32">
-                    <div className="space-y-8">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-widest">
-                            <MapPin className="w-4 h-4" /> Locally Owned & Operated in {cityName}, GA
-                        </div>
-                        <h1 className="text-6xl md:text-7xl font-black tracking-tighter italic leading-[0.9]">
-                            TOP-RATED HOUSE <br />
-                            <span className="text-emerald-500">CLEANING {cityName.toUpperCase()}</span>
-                        </h1>
-                        <p className="text-xl text-slate-400 leading-relaxed max-w-xl font-medium">
-                            Premium residential and commercial cleaning services tailored for homeowners in {cityName}. Experience the CleanShine Pro difference with our cost-based pricing and 48-hour satisfaction guarantee.
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                            <button onClick={() => onNavigate('booking')} className="px-8 py-4 bg-emerald-500 text-[#020617] font-black rounded-2xl flex items-center gap-3 hover:bg-emerald-400 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] uppercase tracking-widest text-sm">
-                                Get Instant Quote in {cityName} <Sparkles className="w-5 h-5" />
-                            </button>
-                            <button onClick={() => onNavigate('services')} className="px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-2xl hover:bg-white/10 transition-all uppercase tracking-widest text-sm">
-                                View Packages
-                            </button>
-                        </div>
-                    </div>
+        <div className="bg-[#020617] text-white">
+            <header className="container mx-auto px-4 md:px-6 py-14 md:py-20 max-w-5xl">
+                <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-6">
+                    <MapPin className="w-4 h-4" /> {c.name}, GA · {c.county}
+                </p>
+                <h1 className="text-4xl md:text-6xl font-bold mb-6 font-heading leading-tight">House cleaning in {c.name}, GA <span className="text-emerald-400">with an exact price online</span></h1>
+                <p className="text-lg text-slate-300 leading-relaxed max-w-3xl mb-8">
+                    CleanShine Pro cleans homes and offices in {c.name} with vetted local partner teams. Enter your address to see your exact price in about a minute. It is set 5% below what local competitors charge for the same service, and every visit ends with a photo report in your client portal.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <Link to="/quote" className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg inline-flex items-center justify-center gap-2">Get my price in {c.name} <ArrowRight className="w-5 h-5" /></Link>
+                    <Link to="/services" className="px-8 py-4 border border-white/20 hover:bg-white/10 font-bold rounded-lg inline-flex items-center justify-center">See services</Link>
+                </div>
+            </header>
 
-                    <div className="relative group">
-                        <div className="absolute -inset-4 bg-emerald-500/20 rounded-[3rem] blur-2xl group-hover:bg-emerald-500/30 transition-all duration-1000"></div>
-                        <div className="relative bg-[#0B1121] border border-white/10 rounded-[3rem] p-8 space-y-6 shadow-2xl overflow-hidden">
-                            <div className="flex justify-between items-center pb-6 border-b border-white/10">
-                                <div>
-                                    <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Service Spotlight</div>
-                                    <h3 className="text-xl font-black italic uppercase">Post-Construction Cleaning</h3>
-                                </div>
-                                <div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-400"><Building2 className="w-6 h-6" /></div>
-                            </div>
-                            <p className="text-sm text-slate-400 leading-relaxed italic">
-                                "As {cityName} continues to grow with new developments, we've specialized in post-construction detailing. We remove the heavy dust and industrial residue that regular cleaners miss, making your new home move-in ready."
-                            </p>
-                            <div className="py-6 space-y-4">
-                                <div className="flex items-center gap-4 group/item">
-                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500 group-hover/item:text-[#020617] transition-all"><Check className="w-5 h-5" /></div>
-                                    <span className="font-bold text-slate-300">HEPA-Filtered Industrial Vacuums</span>
-                                </div>
-                                <div className="flex items-center gap-4 group/item">
-                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500 group-hover/item:text-[#020617] transition-all"><Check className="w-5 h-5" /></div>
-                                    <span className="font-bold text-slate-300">White-Glove Surface Detailing</span>
-                                </div>
-                                <div className="flex items-center gap-4 group/item">
-                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500 group-hover/item:text-[#020617] transition-all"><Check className="w-5 h-5" /></div>
-                                    <span className="font-bold text-slate-300">Construction Window Cleaning</span>
-                                </div>
-                            </div>
-                        </div>
+            <section className="bg-[#050B1A] border-y border-white/5 py-14">
+                <div className="container mx-auto px-4 md:px-6 max-w-5xl grid md:grid-cols-2 gap-10">
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-bold mb-4">Cleaning in {c.name}</h2>
+                        <p className="text-slate-300 leading-relaxed mb-4">{c.note}</p>
+                        <p className="text-slate-400 leading-relaxed">ZIP codes we cover in {c.name}: <span className="text-white font-semibold">{c.zips.join(', ')}</span>. Not sure about your street? The quote checks coverage for your exact address.</p>
+                    </div>
+                    <ul className="space-y-3">
+                        {['Exact price from your address, no surprises at the door', 'Vetted local team with its own liability insurance', 'GPS check-in, check-out and before-and-after photos', 'Free re-clean if you tell us within 24 hours', 'English and Spanish'].map((x) => (
+                            <li key={x} className="flex gap-3 text-slate-300"><Check className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />{x}</li>
+                        ))}
+                    </ul>
+                </div>
+            </section>
+
+            <section className="py-14">
+                <div className="container mx-auto px-4 md:px-6 max-w-5xl">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-8">Services in {c.name}</h2>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                        {SERVICES.map(({ icon: Icon, t, d }) => (
+                            <Link key={t} to="/quote" className="bg-[#0B1121] border border-white/5 hover:border-emerald-500/40 rounded-2xl p-6">
+                                <Icon className="w-6 h-6 text-emerald-400 mb-3" />
+                                <h3 className="font-bold text-lg mb-1">{t} in {c.name}</h3>
+                                <p className="text-slate-400 text-sm">{d}</p>
+                            </Link>
+                        ))}
                     </div>
                 </div>
+            </section>
 
-                {/* Local Trust Grid */}
-                <div className="grid md:grid-cols-3 gap-8 pb-32">
-                    <div className="p-10 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-4">
-                        <div className="flex items-center gap-2 text-yellow-500 mb-2">
-                            {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
+            <section className="bg-[#050B1A] border-t border-white/5 py-14">
+                <div className="container mx-auto px-4 md:px-6 max-w-5xl grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h2 className="text-xl font-bold mb-3">Nearby cities</h2>
+                        <div className="flex flex-wrap gap-3">
+                            {near.map((n) => <Link key={n.slug} to={cityPath(n.slug)} className="px-4 py-2 rounded-full border border-white/15 text-slate-300 hover:text-white hover:border-emerald-500/50">House cleaning {n.name}</Link>)}
+                            <Link to="/service-areas" className="px-4 py-2 rounded-full border border-white/15 text-slate-300 hover:text-white">All areas</Link>
                         </div>
-                        <h4 className="text-lg font-black uppercase tracking-widest italic">{cityName} Native Favorite</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed uppercase font-bold tracking-tight">"The best cleaning experience in Cherokee County. Their attention to detail in the kitchen and bathrooms is unmatched."</p>
                     </div>
-                    <div className="p-10 bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] space-y-4">
-                        <h4 className="text-5xl font-black text-emerald-400 tracking-tighter">100%</h4>
-                        <p className="text-sm font-black text-white uppercase tracking-widest">Satisfaction Shield</p>
-                        <p className="text-xs text-slate-400 font-medium">If you're not wowed within 48 hours, we'll re-clean any area for free. Total peace of mind for {cityName} residents.</p>
-                    </div>
-                    <div className="p-10 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-4">
-                        <h4 className="text-lg font-black uppercase tracking-widest italic leading-tight">Licensed & Insured</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed uppercase font-bold tracking-tight">Full general liability and workers' comp coverage to protect your {cityName} property and our professional staff.</p>
+                    <div className="bg-[#0B1121] border border-white/10 rounded-2xl p-6">
+                        <h2 className="text-xl font-bold mb-2">Own a cleaning company in {c.name}?</h2>
+                        <p className="text-slate-400 text-sm mb-4">We send jobs in {c.county} to local partner companies. You keep 70% to 80% of every job, paid weekly.</p>
+                        <Link to="/partners" className="inline-flex items-center gap-2 text-emerald-300 font-semibold">Join the partner network <ArrowRight className="w-4 h-4" /></Link>
                     </div>
                 </div>
-
-                {/* Call To Action */}
-                <div className="bg-gradient-to-br from-indigo-900 to-[#020617] rounded-[3.5rem] p-16 text-center border border-white/10 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                    <div className="relative z-10 space-y-8">
-                        <h2 className="text-5xl md:text-6xl font-black tracking-tighter italic">READY TO TRANSFORM <br />YOUR {cityName.toUpperCase()} HOME?</h2>
-                        <p className="text-xl text-slate-400 font-medium">Join 500+ happy clients in Georgia. Get your instant estimate in 2 minutes.</p>
-                        <button onClick={() => onNavigate('booking')} className="px-12 py-6 bg-white text-[#020617] font-black rounded-[2rem] hover:bg-emerald-400 transition-all uppercase tracking-[0.2em] text-sm shadow-2xl">
-                            Claim 30% OFF First Service
-                        </button>
-                    </div>
-                </div>
-            </div>
+            </section>
         </div>
     );
-};
-
-export default LocalServicePage;
+}

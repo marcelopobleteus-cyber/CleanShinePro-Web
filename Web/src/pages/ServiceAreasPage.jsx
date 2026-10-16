@@ -1,66 +1,38 @@
 import React from 'react';
 import { MapPin, ArrowRight } from 'lucide-react';
+import Link from '../components/Link';
+import { CITIES, cityPath } from '../site';
 
-const ServiceAreasPage = ({ onNavigate }) => {
-    const areas = [
-        { city: "Woodstock", zip: ["30188", "30189"] },
-        { city: "Kennesaw", zip: ["30144", "30152"] },
-        { city: "Marietta", zip: ["30060", "30061", "30062", "30063", "30064", "30065", "30066", "30067", "30068"] },
-        { city: "Acworth", zip: ["30101", "30102"] },
-    ];
-
-    return (
-        <div className="pt-24 pb-12 bg-[#020617] min-h-screen text-white">
-            <div className="container mx-auto px-6">
-                <div className="max-w-3xl mx-auto text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-6">Serving <span className="text-emerald-400">Woodstock & Cherokee County</span></h1>
-                    <p className="text-slate-400 text-lg">
-                        We provide premium residential and commercial cleaning services to the following communities in Georgia.
-                    </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-12 items-start">
-                    {/* Areas List */}
-                    <div className="grid gap-6">
-                        {areas.map((area, index) => (
-                            <div key={index} className="bg-[#0B1121] border border-white/5 p-6 rounded-xl hover:border-emerald-500/30 transition-all group">
-                                <div className="flex items-center gap-4 mb-3">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                        <MapPin className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white">{area.city}, GA</h3>
-                                </div>
-                                <div className="flex flex-wrap gap-2 pl-14">
-                                    {area.zip.map(zip => (
-                                        <span key={zip} className="text-xs font-mono text-slate-500 bg-white/5 px-2 py-1 rounded border border-white/5">
-                                            {zip}
-                                        </span>
-                                    ))}
-                                </div>
+const ServiceAreasPage = () => (
+    <div className="bg-[#020617] text-white">
+        <header className="container mx-auto px-4 md:px-6 py-14 md:py-20 max-w-4xl text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">Where we <span className="text-emerald-400">clean</span></h1>
+            <p className="text-slate-300 text-lg">
+                Homes and offices in Cobb, Cherokee, North Fulton and Bartow counties, Georgia. We are growing across the Atlanta metro as new partner companies join the network. The quote confirms coverage for your exact address.
+            </p>
+        </header>
+        <section className="container mx-auto px-4 md:px-6 pb-16 max-w-5xl">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {CITIES.map((c) => (
+                    <Link key={c.slug} to={cityPath(c.slug)} className="bg-[#0B1121] border border-white/5 hover:border-emerald-500/40 rounded-2xl p-6 group">
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center"><MapPin className="w-5 h-5" /></span>
+                            <div>
+                                <h2 className="text-lg font-bold group-hover:text-emerald-300">{c.name}, GA</h2>
+                                <p className="text-xs text-slate-500">{c.county}</p>
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Map Placeholder */}
-                    <div className="bg-[#0B1121] border border-white/5 rounded-2xl overflow-hidden h-[400px] relative group">
-                        <iframe
-                            className="w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                            src="https://maps.google.com/maps?q=Woodstock,+GA&t=&z=11&ie=UTF8&iwloc=&output=embed"
-                            allowFullScreen
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                        {/* Overlay CTA */}
-                        <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent">
-                            <button onClick={() => onNavigate('booking')} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
-                                Check Availability in Your Area <ArrowRight className="w-5 h-5" />
-                            </button>
                         </div>
-                    </div>
-                </div>
+                        <div className="flex flex-wrap gap-2">
+                            {c.zips.map((z) => <span key={z} className="text-xs font-mono text-slate-400 bg-white/5 px-2 py-1 rounded border border-white/5">{z}</span>)}
+                        </div>
+                    </Link>
+                ))}
             </div>
-        </div>
-    );
-};
+            <div className="mt-10 text-center">
+                <Link to="/quote" className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg">Check my address and price <ArrowRight className="w-5 h-5" /></Link>
+            </div>
+        </section>
+    </div>
+);
 
 export default ServiceAreasPage;

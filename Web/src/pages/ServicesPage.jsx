@@ -7,14 +7,14 @@ const ServicesPage = ({ onNavigate }) => {
     const checklists = {
         commercial: [
             "Lobby & Reception Detailing",
-            "Restroom Sanitation (Hospital Grade)",
+            "Restroom cleaning and disinfection",
             "Workstation Disinfection",
             "Trash & Recycling Management",
-            "Eco-Friendly Floor Care",
+            "Floor care (vacuum, mop, spot treatment)",
             "Internal Glass & Window Cleaning",
             "Breakroom & Kitchen Maintenance",
-            "High-Touch Point Sterilization",
-            "Pathogen-free certification available"
+            "High-touch points disinfected",
+            "Visit log with GPS check-in, check-out and photos"
         ],
         standard: [
             "Dusting all accessible surfaces (furniture, shelves, decor)",
@@ -41,19 +41,19 @@ const ServicesPage = ({ onNavigate }) => {
         ],
         airbnb: [
             "Full turnover clean between guests",
-            "Laundry service (wash/dry/fold) & professional bed making",
+            "Laundry (wash, dry, fold) and bed making",
             "Restocking essentials (Toilet paper, paper towels, soap, coffee)",
             "Damage & maintenance reporting with photo evidence",
             "Sanitizing high-touch guest areas (remotes, door knobs)",
             "Interior fridge cleaning for fresh guest arrival",
             "Trash removal and bin sanitation",
-            "Staging welcome kits and local guides",
-            "Syncing with Host Calendar for automatic cleaning schedules"
+            "Staging welcome items you provide",
+            "Recurring turnover schedule set with you"
         ]
     };
 
     return (
-        <div className="bg-[#020617] text-white min-h-screen pt-24 pb-12">
+        <div className="bg-[#020617] text-white min-h-screen pt-24 pb-12 overflow-x-hidden">
             {/* Checklist Modal */}
             {activeChecklist && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/60 transition-opacity duration-300">
@@ -98,12 +98,12 @@ const ServicesPage = ({ onNavigate }) => {
 
             {/* Header */}
             <header className="container mx-auto px-6 text-center mb-20 relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-[100px] z-0 pointer-events-none"></div>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-[100px] z-0 pointer-events-none"></div>
                 <h1 className="relative z-10 text-5xl md:text-6xl font-bold mb-6 font-heading">
-                    Specialized <span className="text-emerald-400">Hygiene Solutions</span>
+                    Cleaning <span className="text-emerald-400">Services</span>
                 </h1>
                 <p className="relative z-10 text-slate-400 max-w-2xl mx-auto text-lg font-light leading-relaxed">
-                    From corporate headquarters to high-end residential estates, we deliver a standardized level of cleanliness that ensures health, safety, and brand prestige.
+                    Recurring, deep, move-in/move-out, short-term rental, office and post-construction cleaning in Cobb, Cherokee, North Fulton and Bartow counties. Every service gets an exact price online, a vetted local team and a photo report.
                 </p>
             </header>
 
@@ -127,7 +127,7 @@ const ServicesPage = ({ onNavigate }) => {
                                     <h3 className="text-2xl font-bold font-heading">Commercial & Corporate</h3>
                                 </div>
                                 <p className="text-slate-400 mb-6 leading-relaxed">
-                                    <span className="text-white font-bold block mb-1 text-sm uppercase tracking-wider">Outcome:</span> A pathogen-free, professional environment that boosts employee morale and brand prestige.
+                                    <span className="text-white font-bold block mb-1 text-sm uppercase tracking-wider">Outcome:</span> A clean, professional space on a fixed schedule, with a record of every visit.
                                 </p>
                                 <div className="grid grid-cols-2 gap-4 text-[10px] mb-8 uppercase tracking-widest font-bold">
                                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
@@ -169,7 +169,7 @@ const ServicesPage = ({ onNavigate }) => {
                                 </div>
                                 <div>
                                     <h4 className="text-xl font-bold mb-2">Liability Protection</h4>
-                                    <p className="text-slate-400 text-sm leading-relaxed">Every crew member is background checked, insured, and bonded. We carry $5M in liability coverage for your peace of mind.</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed">Every partner company carries its own general liability insurance, has a W-9 on file and signed our partner agreement and service standards. CleanShine Pro stays responsible for the result.</p>
                                 </div>
                             </div>
                             <div className="flex gap-6">
@@ -177,8 +177,8 @@ const ServicesPage = ({ onNavigate }) => {
                                     <Cross className="w-7 h-7 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h4 className="text-xl font-bold mb-2">Medical Grade Protocols</h4>
-                                    <p className="text-slate-400 text-sm leading-relaxed">We use EPA-registered disinfectants tailored for healthcare facilities, applying the same rigor to corporate offices.</p>
+                                    <h4 className="text-xl font-bold mb-2">A log for every visit</h4>
+                                    <p className="text-slate-400 text-sm leading-relaxed">Every visit is recorded with GPS check-in and check-out times and photos, so facility managers have a record of each service.</p>
                                 </div>
                             </div>
                         </div>
@@ -219,7 +219,7 @@ const ServicesPage = ({ onNavigate }) => {
                                 </div>
                                 <div>
                                     <h4 className="text-xl font-bold mb-2">Move-In / Move-Out</h4>
-                                    <p className="text-slate-400 text-sm leading-relaxed">Guarantee your security deposit return or prepare your new home for a fresh start with our exhaustive turnover checklist.</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed">Empty-home cleaning with a full turnover checklist and a photo report you can share with your landlord or property manager.</p>
                                 </div>
                             </div>
                         </div>
@@ -285,7 +285,7 @@ const ServicesPage = ({ onNavigate }) => {
                                     <h3 className="text-2xl font-bold font-heading">Short-Term Rentals (Airbnb)</h3>
                                 </div>
                                 <p className="text-slate-400 mb-6 leading-relaxed text-sm">
-                                    <span className="text-white font-bold block mb-1 uppercase tracking-wider text-xs">Outcome:</span> Consistent 5-star cleanliness ratings and a turnkey hosting experience.
+                                    <span className="text-white font-bold block mb-1 uppercase tracking-wider text-xs">Outcome:</span> Guest-ready turnovers with photos of every room after each clean.
                                 </p>
                                 <div className="grid grid-cols-2 gap-4 text-[10px] mb-8 uppercase tracking-widest font-bold">
                                     <div className="p-3 bg-white/5 rounded-xl border border-white/5">
@@ -299,7 +299,7 @@ const ServicesPage = ({ onNavigate }) => {
                                 </div>
                                 <div className="flex flex-col gap-4">
                                     <ul className="space-y-4">
-                                        {['Same-Day Turnover (11AM-3PM)', 'Hotel-Quality Linen Staging', 'Essential Restocking'].map((item, i) => (
+                                        {['Turnovers between check-out and check-in', 'Bed making and towel staging', 'Restocking with your supplies'].map((item, i) => (
                                             <li key={i} className="flex items-center gap-3 text-sm text-slate-300">
                                                 <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center">
                                                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -327,7 +327,7 @@ const ServicesPage = ({ onNavigate }) => {
                                 </div>
                                 <div>
                                     <h4 className="text-xl font-bold mb-2">Precision Timing</h4>
-                                    <p className="text-slate-400 text-sm leading-relaxed">We sync with your booking calendar. Our crews are dispatched automatically when a guest checks out, ensuring zero downtime.</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed">Set your turnover schedule with us once. Each turnover is offered to the partner teams that cover your property, and you get photos of every room when it is done.</p>
                                 </div>
                             </div>
                             <div className="flex gap-6">
@@ -336,7 +336,7 @@ const ServicesPage = ({ onNavigate }) => {
                                 </div>
                                 <div>
                                     <h4 className="text-xl font-bold mb-2">Hotel-Quality Staging</h4>
-                                    <p className="text-slate-400 text-sm leading-relaxed">We don't just clean; we stage. Towels folded perfectly, welcome kits arranged, and every surface photo-ready for your next review.</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed">Beds made, towels staged and the welcome items you leave set out, with damage or missing items reported with photos.</p>
                                 </div>
                             </div>
                         </div>
@@ -347,9 +347,9 @@ const ServicesPage = ({ onNavigate }) => {
                 <section className="bg-gradient-to-r from-emerald-900/20 to-blue-900/20 rounded-3xl p-16 text-center border border-white/5 mb-12 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full -mr-32 -mt-32 group-hover:bg-emerald-500/10 transition-colors"></div>
                     <h2 className="text-4xl font-bold mb-6 relative z-10 font-heading">Ready to elevate your space?</h2>
-                    <p className="text-slate-400 mb-10 max-w-xl mx-auto text-lg font-light relative z-10">Get a custom quote in minutes. No credit card required, just simple transparent pricing tailored to your specific needs.</p>
+                    <p className="text-slate-400 mb-10 max-w-xl mx-auto text-lg font-light relative z-10">See your exact price in about a minute. No phone call and no surprises at the door.</p>
                     <button onClick={() => onNavigate('booking')} className="px-12 py-5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-xl hover:shadow-emerald-500/30 active:scale-95 relative z-10">
-                        Get Free Estimate Now
+                        Get my exact price
                     </button>
                 </section>
 

@@ -7,3 +7,6 @@ export const BUSINESS_PHONE = '';
 // - Master: administrador de todas las cuentas de CleaningIQ
 export const ASSOCIATE_LOGIN_URL = 'https://app.cleanshinepro.com/login';
 export const MASTER_LOGIN_URL = 'https://cleaning-iq.com/login';
+
+// Formulario "quiero ser socio" (funcion partner-apply de CleaningIQ): slug publico de CleanShine Pro
+export const PARTNER_APPLY_SLUG = 'cleanshine-pro';
