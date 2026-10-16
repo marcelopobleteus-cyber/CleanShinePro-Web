@@ -4,6 +4,7 @@ import Link from '../components/Link';
 import Faq from '../components/Faq';
 import { PARTNER_FAQ } from '../content/faq';
 import { PARTNER_APPLY_SLUG } from '../config';
+import { getAttribution } from '../lib/attribution';
 
 // Debe coincidir con supabase/functions/_shared/partner_apply.ts (CleaningIQ): el servidor solo acepta estos valores
 const SERVICE_VALUES = ['Standard cleaning', 'Deep cleaning', 'Move-in / move-out', 'Airbnb / short-term rental', 'Office / commercial', 'Post-construction'];
@@ -162,7 +163,7 @@ function ApplyForm({ c, lang }) {
         setBusy(true);
         try {
             const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-            const payload = { action: 'apply', slug: PARTNER_APPLY_SLUG, ...form, message: lang === 'es' ? `[Applied in Spanish] ${form.message}`.trim() : form.message };
+            const payload = { action: 'apply', slug: PARTNER_APPLY_SLUG, ...form, message: lang === 'es' ? `[Applied in Spanish] ${form.message}`.trim() : form.message, attribution: getAttribution() };
             const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/partner-apply`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` }, body: JSON.stringify(payload),
             });
