@@ -11,13 +11,23 @@ const urlParam = (k) => (typeof window === 'undefined' ? null : new URLSearchPar
 
 // Datos que el motor de precios de CleaningIQ necesita (el servidor calcula; nunca recibe un precio).
 // Es el mismo motor que usan el panel de CleaningIQ y su cotizador: un solo precio en todas partes.
+// Direccion completa: calle + unidad, en el mismo formato que usa CleaningIQ ("120 Main St Apt 4")
+const UNIT_TAIL = /[,\s]+(?:(?:apartment|apt|unit|suite|ste)(?:\.\s*|\s+)#?\s*|#\s*)[a-z0-9][a-z0-9-]*\s*$/i;
+const cleanUnit = (u) => String(u || '').replace(/^(?:apartment|apt|unit|suite|ste)\.?\s*#?\s*|^#\s*/i, '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 12);
+function fullAddress(data) {
+    const street = String(data.address || '').trim();
+    const unit = cleanUnit(data.unit);
+    if (!unit) return street;
+    return `${street.replace(UNIT_TAIL, '').trim()} Apt ${unit}`;
+}
+
 function toQuoteInput(data, recurringConversion) {
     return {
         mainService: data.mainService, subService: data.subService,
         sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
         extras: data.extras, basementType: data.basementType, levels: data.levels,
         quoteMode: data.quoteMode, roomSelection: data.roomSelection,
-        zip: data.zip, address: data.address || undefined,
+        zip: data.zip, address: fullAddress(data) || undefined,
         recurringConversion
     };
 }
@@ -191,6 +201,7 @@ const BookingPage = () => {
         email: '',
         phone: '',
         address: '',
+        unit: '',
         city: 'Woodstock',
         zip: '',
         basementType: 'none',
@@ -265,10 +276,9 @@ const BookingPage = () => {
     const pickUnit = (unit) => {
         const u = (homeLookup?.units || []).find((x) => x.unit === unit);
         if (!u) return;
-        const street = (formData.address || '').replace(/[,\s]+(?:(?:apartment|apt|unit|suite|ste)(?:\.\s*|\s+)#?\s*|#\s*)[a-z0-9][a-z0-9-]*\s*$/i, '').trim();
         setFormData(prev => ({
             ...prev,
-            address: `${street} Apt ${u.unit}`,
+            unit: u.unit,
             sqft: u.sqft ? String(u.sqft) : prev.sqft,
             beds: u.bedrooms != null ? String(Math.min(Math.max(Math.round(u.bedrooms), 1), 6)) : prev.beds,
             baths: u.bathrooms != null ? String(Math.min(Math.max(Math.round(u.bathrooms * 2) / 2, 1), 5)) : prev.baths,
@@ -670,7 +680,7 @@ const BookingPage = () => {
                                         <h4 class="info-title">Prepared For:</h4>
                                         <div class="info-details">
                                             <div class="customer-name">${formData.name}</div>
-                                            <div style="color: #475569; font-weight: 600;">${formData.address}</div>
+                                            <div style="color: #475569; font-weight: 600;">${fullAddress(formData)}</div>
                                             <div style="color: #64748b; margin-top: 4px;">${formData.email}</div>
                                             <div style="color: #64748b;">${formData.phone}</div>
                                         </div>
@@ -788,7 +798,7 @@ const BookingPage = () => {
                 _subject: `New Booking Request: ${formData.name} — ${formData.date} ${formData.time}`,
                 _template: "table",
                 name: formData.name, email: formData.email, phone: formData.phone,
-                address: formData.address, date: formData.date, time: formData.time,
+                address: fullAddress(formData), date: formData.date, time: formData.time,
                 service: `${formData.mainService} / ${formData.subService}`,
                 total: `$${quote.total}`, deposit_due: `$${quote.deposit}`
             })
@@ -950,10 +960,14 @@ const BookingPage = () => {
                                     )}
                                 </div>
 
-                                <div className="grid md:grid-cols-3 gap-4">
+                                <div className="grid md:grid-cols-4 gap-4">
                                     <div className="space-y-2 md:col-span-2">
                                         <label htmlFor="bp-street" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Property Street Address</label>
                                         <input id="bp-street" type="text" name="address" autoComplete="street-address" value={formData.address} onChange={handleChange} onBlur={findHome} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold" placeholder="e.g. 120 Main St" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="bp-apt" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Apt / Unit</label>
+                                        <input id="bp-apt" type="text" name="unit" autoComplete="address-line2" maxLength={12} value={formData.unit} onChange={handleChange} className={`w-full bg-white/5 border ${homeLookup?.status === 'multi' && !formData.unit ? 'border-amber-400/60' : 'border-white/10'} rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-lg font-bold`} placeholder="e.g. 3208" />
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="bp-zip" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">ZIP Code</label>
@@ -961,17 +975,17 @@ const BookingPage = () => {
                                         {errors.zip && <p className="text-red-400 text-xs font-bold">{errors.zip}</p>}
                                     </div>
                                     {homeLookup && (
-                                        <p className="md:col-span-3 text-xs font-bold" role="status" aria-live="polite">
+                                        <p className="md:col-span-4 text-xs font-bold" role="status" aria-live="polite">
                                             {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
                                             {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
                                             {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
-                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : 'Please enter the rooms of your unit below (the size is optional).'}</span>}
+                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : (formData.unit ? 'Enter the rooms of your unit below (the size is optional).' : 'Add your apartment number and enter the rooms of your unit below (the size is optional).')}</span>}
                                         </p>
                                     )}
                                     {homeLookup && homeLookup.units?.length > 1 && (
-                                        <div className="md:col-span-3 space-y-2">
+                                        <div className="md:col-span-4 space-y-2">
                                             <label htmlFor="bp-unit" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Your unit ({homeLookup.units.length} in this building)</label>
-                                            <select id="bp-unit" value={homeLookup.unit || ''} onChange={(e) => pickUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-bold">
+                                            <select id="bp-unit" value={homeLookup.units.some((u) => u.unit === formData.unit) ? formData.unit : ''} onChange={(e) => pickUnit(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-bold">
                                                 <option value="" className="bg-[#020617]">Select your unit…</option>
                                                 {homeLookup.units.map((u) => (
                                                     <option key={u.unit} value={u.unit} className="bg-[#020617]">
@@ -1371,7 +1385,10 @@ const BookingPage = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-black text-slate-500 uppercase">Service Address</label>
-                                                    <input type="text" name="address" value={formData.address} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Street, Woodstock, GA" />
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <input type="text" name="address" aria-label="Street" value={formData.address} onChange={handleChange} className="col-span-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Street, Woodstock, GA" />
+                                                        <input type="text" name="unit" aria-label="Apt / Unit" maxLength={12} value={formData.unit} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Apt / Unit" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
