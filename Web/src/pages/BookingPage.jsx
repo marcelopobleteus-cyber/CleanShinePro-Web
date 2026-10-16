@@ -210,6 +210,8 @@ const BookingPage = () => {
 
     const [errors, setErrors] = useState(paymentReturn === 'cancelled' ? { general: 'Payment was cancelled. You can request a new quote or contact us.' } : {});
     const [estimatedPrice, setEstimatedPrice] = useState(null);
+    // Sin pies cuadrados (u otro dato) el motor devuelve un rango: se muestra el rango y la oficina confirma el precio exacto
+    const isRange = estimatedPrice?.precision === 'range';
     const [priceError, setPriceError] = useState('');
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -338,7 +340,8 @@ const BookingPage = () => {
                     isValid = false;
                 }
             } else {
-                if (!formData.sqft || formData.sqft < 100) { newErrors.sqft = "Valid square footage required (min 100)"; isValid = false; }
+                // Los pies cuadrados son opcionales: sin ellos el motor calcula un rango y la oficina confirma el precio exacto
+                if (formData.sqft !== '' && formData.sqft != null && Number(formData.sqft) < 100) { newErrors.sqft = "If you know it, enter at least 100 sq ft (or leave it blank)"; isValid = false; }
                 if (formData.mainService === 'residential' || formData.mainService === 'short_term') {
                     if (!formData.beds) { newErrors.beds = "Bedrooms required"; isValid = false; }
                     if (!formData.baths) { newErrors.baths = "Bathrooms required"; isValid = false; }
@@ -439,7 +442,7 @@ const BookingPage = () => {
         const addonLines = (estimatedPrice?.addons || []).map(a => ({ desc: `Add-on: ${a.name}`, qty: 1, price: a.price }));
 
         const itemsList = [
-            { desc: serviceTitle + (formData.quoteMode === 'AREAS' ? ' (Area-Based Protocol)' : ` (${formData.sqft} SQFT)`), qty: 1, price: estimatedPrice?.base },
+            { desc: serviceTitle + (formData.quoteMode === 'AREAS' ? ' (Area-Based Protocol)' : formData.sqft ? ` (${formData.sqft} SQFT)` : ''), qty: 1, price: estimatedPrice?.base },
             ...areaLines,
             ...addonLines,
             ...(estimatedPrice?.tax > 0 ? [{ desc: 'Sales tax', qty: 1, price: estimatedPrice.tax }] : [])
@@ -962,7 +965,7 @@ const BookingPage = () => {
                                             {homeLookup.status === 'loading' && <span className="text-slate-400">Looking up your home in public records...</span>}
                                             {homeLookup.status === 'found' && <span className="text-emerald-400">✓ We found your home: {homeLookup.summary}. Change anything that is not right.</span>}
                                             {homeLookup.status === 'none' && <span className="text-slate-400">We could not find your home in public records. Please enter the details below.</span>}
-                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : 'Please enter the size and rooms of your unit below.'}</span>}
+                                            {homeLookup.status === 'multi' && <span className="text-amber-300">This looks like a multi-unit building. {homeLookup.units.length ? 'Choose your unit below.' : 'Please enter the rooms of your unit below (the size is optional).'}</span>}
                                         </p>
                                     )}
                                     {homeLookup && homeLookup.units?.length > 1 && (
@@ -1029,9 +1032,10 @@ const BookingPage = () => {
                                 ) : (
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Approximate Square Footage</label>
-                                            <input type="number" name="sqft" value={formData.sqft} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-xl font-bold" placeholder="e.g. 2500" />
-                                            {errors.sqft && <p className="text-red-400 text-xs font-bold">{errors.sqft}</p>}
+                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Approximate Square Footage <span className="normal-case tracking-normal font-medium text-slate-500">(optional)</span></label>
+                                            <input type="number" name="sqft" min="100" value={formData.sqft} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all text-xl font-bold" placeholder="Not sure? Leave it blank" />
+                                            {errors.sqft ? <p className="text-red-400 text-xs font-bold">{errors.sqft}</p>
+                                                : !formData.sqft && <p className="text-slate-500 text-xs">Don't know it? No problem: you'll see a price range and we confirm the exact price before your visit.</p>}
                                         </div>
 
                                         {(formData.mainService === 'residential' || formData.mainService === 'short_term') && (
@@ -1265,11 +1269,11 @@ const BookingPage = () => {
                                                 <div className="grid lg:grid-cols-2 gap-10">
                                                     <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900 border border-indigo-500/30 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl">
                                                         <div className="relative z-10 space-y-6">
-                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">UNLOCKED: Your Exact Quote</span>
+                                                            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-indigo-500/30 font-mono italic">{isRange ? 'UNLOCKED: Your Price Range' : 'UNLOCKED: Your Exact Quote'}</span>
                                                             <div className="space-y-1">
-                                                                <h4 className="text-6xl font-black text-white tracking-tighter">${estimatedPrice.total}</h4>
-                                                                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] animate-pulse">
-                                                                    Verified Fixed-Price Guarantee
+                                                                <h4 className={`${isRange ? 'text-5xl' : 'text-6xl'} font-black text-white tracking-tighter`}>{isRange ? `$${estimatedPrice.range_low} – $${estimatedPrice.range_high}` : `$${estimatedPrice.total}`}</h4>
+                                                                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em]">
+                                                                    {isRange ? 'We confirm the exact price with you before the visit' : 'Verified Fixed-Price Guarantee'}
                                                                 </p>
                                                             </div>
 
@@ -1325,7 +1329,8 @@ const BookingPage = () => {
                                                         <div key={a.code} className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">+ {a.name}</span><span className="text-white">${a.price}</span></div>
                                                     ))}
                                                     {estimatedPrice.tax > 0 && <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-slate-400">Sales tax</span><span className="text-white">${estimatedPrice.tax}</span></div>}
-                                                    <div className="flex justify-between pt-1"><span className="text-emerald-400 font-black uppercase tracking-widest text-xs">Total (travel included)</span><span className="text-2xl font-black text-white">${estimatedPrice.total}</span></div>
+                                                    <div className="flex justify-between pt-1"><span className="text-emerald-400 font-black uppercase tracking-widest text-xs">{isRange ? 'Estimated total (travel included)' : 'Total (travel included)'}</span><span className="text-2xl font-black text-white">${estimatedPrice.total}</span></div>
+                                                    {isRange && <p className="text-xs text-slate-400">Estimate based on the rooms you entered. The office confirms the exact price with you before the visit.</p>}
                                                     <div className="flex justify-between text-xs"><span className="text-slate-500">Deposit to book</span><span className="text-slate-300 font-bold">${estimatedPrice.deposit}</span></div>
                                                 </div>
                                             </div>
