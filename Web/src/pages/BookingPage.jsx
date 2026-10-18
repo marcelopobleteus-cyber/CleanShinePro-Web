@@ -7,6 +7,11 @@ import {
 import { CLEANINGIQ_ORG_ID, callCleaningIQ, getAddons } from '../services/cleaningiq';
 import { getAttribution } from '../lib/attribution';
 
+// Consentimiento de correo (obligatorio para ver el precio). El texto debe ser IDENTICO a consentWording('email_marketing', v1)
+// de CleaningIQ (_shared/consent.ts): el servidor guarda su propia copia como prueba. Si cambia el texto, sube la version en ambos lados.
+const EMAIL_CONSENT_TEXT = 'Yes, CleanShine Pro LLC may email me occasional cleaning tips and offers. I can unsubscribe at any time.';
+const consentPayload = (email) => ({ version: 'v1', email_marketing: email === true, sms: false });
+
 const urlParam = (k) => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get(k));
 
 // Datos que el motor de precios de CleaningIQ necesita (el servidor calcula; nunca recibe un precio).
@@ -233,6 +238,7 @@ const BookingPage = () => {
     const [quoteId] = useState(`CSP-${Math.floor(Date.now() / 1000).toString().slice(-6)}`);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isEmailVerified, setIsEmailVerified] = useState(false);
+    const [emailConsent, setEmailConsent] = useState(false);
     const [hasCompletedBooking] = useState(false);
     const [quoteCount, setQuoteCount] = useState(0);
     const [leadId, setLeadId] = useState(null);
@@ -818,6 +824,7 @@ const BookingPage = () => {
                 // No desbloqueo el precio en el paso 5: el lead se crea ahora
                 const created = await callCleaningIQ('web-lead', {
                     action: 'quote', organization_id: CLEANINGIQ_ORG_ID, attribution: getAttribution(),
+                    consent: consentPayload(emailConsent),
                     contact: { name: formData.name, email: formData.email, phone: formData.phone },
                     quote_input: quoteInput
                 });
@@ -1217,11 +1224,31 @@ const BookingPage = () => {
                                                                         <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-[#020617] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 outline-none" placeholder="(123) 456-7890" />
                                                                     </div>
 
+                                                                    <label htmlFor="email-consent" className={`flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-colors ${emailConsent ? 'border-emerald-500 bg-emerald-500/10' : 'border-amber-400/70 bg-amber-400/10'}`}>
+                                                                        <input
+                                                                            id="email-consent"
+                                                                            type="checkbox"
+                                                                            required
+                                                                            checked={emailConsent}
+                                                                            onChange={(e) => { setEmailConsent(e.target.checked); if (e.target.checked) setErrors(prev => ({ ...prev, general: undefined })); }}
+                                                                            className="w-6 h-6 mt-0.5 shrink-0 accent-emerald-500 cursor-pointer"
+                                                                        />
+                                                                        <span className="space-y-1">
+                                                                            <span className="block text-[11px] font-black text-amber-300 uppercase tracking-widest">Required to see your price</span>
+                                                                            <span className="block text-sm text-white leading-snug">{EMAIL_CONSENT_TEXT}</span>
+                                                                            <span className="block text-xs text-slate-400">We will email you your quote and a link to book.</span>
+                                                                        </span>
+                                                                    </label>
+
                                                                     <button
                                                                         type="button"
                                                                         onClick={async () => {
                                                                             if (!formData.name || !formData.email || !formData.phone) {
                                                                                 setErrors(prev => ({ ...prev, general: "Name, email and phone are required" }));
+                                                                                return;
+                                                                            }
+                                                                            if (!emailConsent) {
+                                                                                setErrors(prev => ({ ...prev, general: "Please check the box to receive your quote by email" }));
                                                                                 return;
                                                                             }
                                                                             setIsCalculating(true);
@@ -1230,6 +1257,7 @@ const BookingPage = () => {
                                                                                     action: 'quote',
                                                                                     organization_id: CLEANINGIQ_ORG_ID,
                                                                                     attribution: getAttribution(),
+                                                                                    consent: consentPayload(true),
                                                                                     contact: { name: formData.name, email: formData.email, phone: formData.phone },
                                                                                     quote_input: toQuoteInput(formData, isRecurringConverted)
                                                                                 });
@@ -1256,7 +1284,7 @@ const BookingPage = () => {
                                                                     {errors.verificationNote && (
                                                                         <p className="text-[10px] text-emerald-400 text-center font-bold animate-pulse mt-2">{errors.verificationNote}</p>
                                                                     )}
-                                                                    <p className="text-[8px] text-slate-500 text-center uppercase tracking-tighter">🔒 We only use your info for this quote. No spam.</p>
+                                                                    <p className="text-[10px] text-slate-500 text-center">🔒 We never sell your info. Unsubscribe from any email with one click.</p>
                                                                 </div>
                                                             </div>
                                                         </div>
