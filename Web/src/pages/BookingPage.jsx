@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { CLEANINGIQ_ORG_ID, callCleaningIQ, getAddons } from '../services/cleaningiq';
 import { getAttribution } from '../lib/attribution';
+import IncludesList from '../components/IncludesList';
+import { useServiceIncludes } from '../content/serviceIncludes';
 
 // Consentimiento de correo (obligatorio para ver el precio). El texto debe ser IDENTICO a consentWording('email_marketing', v1)
 // de CleaningIQ (_shared/consent.ts): el servidor guarda su propia copia como prueba. Si cambia el texto, sube la version en ambos lados.
@@ -70,42 +72,18 @@ const serviceEngines = {
                 title: 'Premium Standard Cleaning',
                 desc: 'Regular maintenance for a healthy, dust-free home environment.',
                 features: ['All Surfaces Dusted', 'Vacuum & Mop', 'Detailed Restrooms', 'Kitchen Externals', 'Trash Removal'],
-                checklist: [
-                    'Dusting all furniture and accessible surfaces',
-                    'Vacuuming carpets and mopping hard floors',
-                    'Cleaning and disinfecting bathrooms (toilet, shower, sinks)',
-                    'Cleaning exterior of kitchen appliances and countertops',
-                    'Emptying trash bins and replacing liners',
-                    'Basic organization and making beds'
-                ]
             },
             'deep': {
                 id: 'deep',
                 title: 'Full Deep Sanitize',
                 desc: 'Detailed restoration for homes that need extra attention.',
-                features: ['Baseboards Wiped', 'Inside Oven & Microwave', 'Window Tracks', 'Vents & Grills', 'Heavy Grout Scrub'],
-                checklist: [
-                    'Everything in Standard Cleaning PLUS:',
-                    'Hand-wiping all baseboards and door frames',
-                    'Cleaning interior of oven and microwave',
-                    'Detailing window tracks and sills',
-                    'Scrubbing tile grout in bathrooms and kitchens',
-                    'Deep cleaning behind light-moveable furniture'
-                ]
+                features: ['Baseboards & Frames', 'Inside Oven & Microwave', 'Blinds & Fans', 'Grout Scrub', 'Switches & Handles'],
             },
             'move_out': {
                 id: 'move_out',
                 title: 'Move-In / Move-Out',
                 desc: 'Comprehensive turnover cleaning for empty properties.',
-                features: ['Inside All Cabinets', 'Baseboards & Trim', 'Closet Detailing', 'Wall Spotting', 'Appliance Deep Clean'],
-                checklist: [
-                    'Deep cleaning of all empty rooms and closets',
-                    'Wiping inside all kitchen and bathroom cabinets',
-                    'Detailing all baseboards, door frames, and window sills',
-                    'Cleaning interior of all major appliances',
-                    'Removing dust and cobwebs from high ceilings and fans',
-                    'Sweeping, mopping, and vacuuming all floor surfaces'
-                ]
+                features: ['Inside All Cabinets', 'Inside Fridge & Oven', 'Inside Closets', 'Window Tracks', 'All of Deep Clean'],
             }
 
         }
@@ -120,57 +98,25 @@ const serviceEngines = {
                 id: 'office',
                 title: 'Pro Office Sanitation',
                 desc: 'Daily or periodic maintenance for high-productivity workspaces.',
-                features: ['Workstation Disinfection', 'Restroom Sanitation', 'Lobby Detailing', 'Trash Management', 'Floor Care'],
-                checklist: [
-                    'Disinfecting all workstations and high-touch points',
-                    'Sanitizing restrooms and replenishing soaps/paper',
-                    'Cleaning reception area and conference rooms',
-                    'Floor Care (Vacuuming/Mopping)',
-                    'Emptying trash and recycling bins',
-                    'Cleaning breakroom area and kitchenette'
-                ]
+                features: ['Restroom Disinfection', 'Break Room', 'High-Touch Points', 'Trash', 'Floor Care'],
             },
             'medical': {
                 id: 'medical',
-                title: 'Medical Grade Sterilization',
-                desc: 'Terminal cleaning standards with hospital-grade disinfectants.',
-                features: ['Sterilization Protocols', 'Waiting Area Detail', 'Exam Room Prep', 'Bio-Hazard Safety', 'Zero Cross-Contamination'],
-                checklist: [
-                    'Hospital-grade sterilization of all surfaces',
-                    'High-level disinfection of waiting and exam rooms',
-                    'Strict adherence to cross-contamination prevention',
-                    'Specialized floor care and antimicrobial treatment',
-                    'Sanitization of medical-grade furniture and equipment bases',
-                    'Documentation of cleaning for compliance'
-                ]
+                title: 'Medical & Dental Office',
+                desc: 'Disinfection of exam rooms, waiting areas and restrooms.',
+                features: ['Exam Room Surfaces', 'Waiting Area', 'Restroom Disinfection', 'High-Touch Points', 'Floor Care'],
             },
             'retail': {
                 id: 'retail',
                 title: 'Retail & Showrooms',
-                desc: 'Floor polishing and dust-free environments for luxury displays.',
-                features: ['Floor Buffing', 'Glass & Mirror Detail', 'Fitting Room Sanitize', 'Display Dusting', 'Aesthetic Polish'],
-                checklist: [
-                    'Expert floor buffing and high-gloss polishing',
-                    'Detailing glass windows, mirrors, and displays',
-                    'Daily maintenance for high-traffic retail areas',
-                    'Sanitizing fitting rooms and checkout counters',
-                    'Dust-free cleaning for luxury merchandise displays',
-                    'Entrance area debris and dust control'
-                ]
+                desc: 'Clean floors, glass and displays for your customers.',
+                features: ['Sales Floor', 'Entrance & Display Glass', 'Display Dusting', 'Fitting Rooms', 'Checkout Counters'],
             },
             'construction': {
                 id: 'construction',
                 title: 'Post-Construction',
-                desc: 'Heavy debris removal and fine dust detailing for occupancy.',
-                features: ['Fine Dusting', 'Debris Removal', 'Sticker Removal', 'Window Detailing', 'HVAC Vent Cleaning'],
-                checklist: [
-                    'Three-phase construction cleaning (Rough, Light, Final)',
-                    'Industrial-grade fine dust extraction from all surfaces',
-                    'Removing adhesive, paint splatters, and cement residue',
-                    'Detailing inside all cabinets and drawers',
-                    'Cleaning HVAC vents and ceiling fixtures',
-                    'Final polish of all fixtures and hardware'
-                ]
+                desc: 'Construction dust and sticker removal to get the space ready.',
+                features: ['Fine Dusting', 'Sticker & Film Removal', 'Windows & Frames', 'Vents Dusted', 'Small Debris Bagged'],
             }
         }
     },
@@ -183,15 +129,8 @@ const serviceEngines = {
             'airbnb': {
                 id: 'airbnb',
                 title: 'Airbnb Specialist Turnover',
-                desc: 'Hotel-standard staging and deep disinfection for 5-star reviews.',
-                features: ['Laundry Service', 'Amenity Restock', 'Damage Report', 'Pro Bed Staging', 'High-Touch Sanitization'],
-                checklist: [
-                    'Complete turnover cleaning and sanitization',
-                    'Washing and drying linens and towels',
-                    'Professional bed making and towel staging',
-                    'Restocking guest essentials (toiletries, coffee, etc.)',
-                    'Visual inspection and damage reporting with photos'
-                ]
+                desc: 'Turnover between guests: linens, dishes, restock and staging.',
+                features: ['Sheets & Towels', 'Dishes', 'Restock', 'Damage Report', 'High-Touch Points'],
             }
         }
     }
@@ -242,6 +181,7 @@ const BookingPage = () => {
     const [isCalculating, setIsCalculating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [subServiceInfo, setSubServiceInfo] = useState(null);
+    const includesMap = useServiceIncludes(); // lo que incluye cada servicio (CleaningIQ)
     const [catalogAddons, setCatalogAddons] = useState([]); // extras de la empresa (Add-ons de CleaningIQ)
     const [timeLeft, setTimeLeft] = useState(7200);
     const [isRecurringConverted, setIsRecurringConverted] = useState(false);
@@ -1379,14 +1319,9 @@ const BookingPage = () => {
                                                     </div>
 
                                                     <div className="space-y-6 flex flex-col justify-center">
-                                                        <h4 className="text-sm font-black flex items-center gap-2 text-emerald-400 uppercase tracking-widest"><ListChecks className="w-4 h-4" /> Final Task Consensus</h4>
-                                                        <div className="bg-white/5 border border-white/5 rounded-3xl p-8 space-y-4">
-                                                            {subServiceInfo?.checklist.map((task, idx) => (
-                                                                <div key={idx} className="flex items-start gap-4 text-xs font-bold">
-                                                                    <div className="p-1 bg-emerald-500/20 rounded-lg text-emerald-400 mt-0.5"><Check className="w-3 h-3" /></div>
-                                                                    <span className="text-slate-300 leading-tight">{task}</span>
-                                                                </div>
-                                                            ))}
+                                                        <h4 className="text-sm font-black flex items-center gap-2 text-emerald-400 uppercase tracking-widest"><ListChecks className="w-4 h-4" /> What's Included</h4>
+                                                        <div className="bg-white/5 border border-white/5 rounded-3xl p-8">
+                                                            <IncludesList items={includesMap[serviceKeyOf(formData)]} title={false} />
                                                         </div>
                                                     </div>
                                                 </div>
