@@ -26,12 +26,22 @@ function fullAddress(data) {
     return `${street.replace(UNIT_TAIL, '').trim()} Apt ${unit}`;
 }
 
+// Cocinas de la casa: en modo por ambientes salen de la lista; si no, de la pregunta (por defecto 1)
+function kitchensOf(data) {
+    if (data.quoteMode === 'AREAS') return Math.max(Number(data.roomSelection?.kitchen) || 1, 1);
+    return Math.max(Number(data.kitchens) || 1, 1);
+}
+
+// Clave del servicio igual que en CleaningIQ ('residential.deep', 'short_term'): para saber que extras ya incluye
+const serviceKeyOf = (data) => (data.mainService === 'short_term' || !data.subService ? data.mainService : `${data.mainService}.${data.subService}`);
+
 function toQuoteInput(data, recurringConversion) {
     return {
         mainService: data.mainService, subService: data.subService,
         sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
         extras: data.extras, basementType: data.basementType, levels: data.levels,
         quoteMode: data.quoteMode, roomSelection: data.roomSelection,
+        kitchens: kitchensOf(data),
         zip: data.zip, address: fullAddress(data) || undefined,
         recurringConversion
     };
@@ -73,7 +83,7 @@ const serviceEngines = {
                 id: 'deep',
                 title: 'Full Deep Sanitize',
                 desc: 'Detailed restoration for homes that need extra attention.',
-                features: ['Baseboards Wiped', 'Inside Oven/Fridge', 'Window Tracks', 'Vents & Grills', 'Heavy Grout Scrub'],
+                features: ['Baseboards Wiped', 'Inside Oven & Microwave', 'Window Tracks', 'Vents & Grills', 'Heavy Grout Scrub'],
                 checklist: [
                     'Everything in Standard Cleaning PLUS:',
                     'Hand-wiping all baseboards and door frames',
@@ -180,8 +190,7 @@ const serviceEngines = {
                     'Washing and drying linens and towels',
                     'Professional bed making and towel staging',
                     'Restocking guest essentials (toiletries, coffee, etc.)',
-                    'Visual inspection and damage reporting with photos',
-                    'Interior fridge cleaning included'
+                    'Visual inspection and damage reporting with photos'
                 ]
             }
         }
@@ -211,6 +220,7 @@ const BookingPage = () => {
         zip: '',
         basementType: 'none',
         levels: 1,
+        kitchens: '1',
         extras: [],
         quoteMode: 'SQFT', // 'SQFT' or 'AREAS'
         roomSelection: {
@@ -291,7 +301,22 @@ const BookingPage = () => {
         }));
         setHomeLookup(h => ({ ...h, unit: u.unit }));
     };
-    const addonChoices = catalogAddons.filter(a => !a.applies_to?.length || a.applies_to.includes(formData.mainService));
+    // Extras del tipo de servicio: los que ya incluye la limpieza elegida se muestran como incluidos y no se ofrecen
+    const serviceAddons = catalogAddons.filter(a => !a.applies_to?.length || a.applies_to.includes(formData.mainService));
+    const includedAddons = serviceAddons.filter(a => (a.included_in || []).includes(serviceKeyOf(formData)));
+    const addonChoices = serviceAddons.filter(a => !includedAddons.includes(a));
+    const kitchenCount = kitchensOf(formData);
+    // Precio que ve el cliente: los extras por cocina se cobran una vez por cocina
+    const addonPrice = (a) => Number(a.price) * (a.per_kitchen ? kitchenCount : 1);
+    const extraKitchenAddons = includedAddons.filter(a => a.per_kitchen && kitchenCount > 1);
+    const IncludedNote = () => includedAddons.length > 0 ? (
+        <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-200 space-y-1">
+            <p><span className="font-black uppercase tracking-widest text-emerald-400">Included in this cleaning:</span> {includedAddons.map(a => a.name).join(', ')}</p>
+            {extraKitchenAddons.length > 0 && (
+                <p className="text-slate-300">With {kitchenCount} kitchens, {extraKitchenAddons.map(a => `${a.name.toLowerCase()} (+$${Number(a.price) * (kitchenCount - 1)})`).join(' and ')} for the additional kitchen{kitchenCount > 2 ? 's' : ''} is added to your price.</p>
+            )}
+        </div>
+    ) : null;
 
 
 
@@ -1077,6 +1102,14 @@ const BookingPage = () => {
                                                     </select>
                                                     {errors.baths && <p className="text-red-400 text-xs font-bold">{errors.baths}</p>}
                                                 </div>
+                                                {formData.mainService === 'residential' && (
+                                                    <div className="space-y-2">
+                                                        <label htmlFor="kitchens" className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Kitchens</label>
+                                                        <select id="kitchens" name="kitchens" value={formData.kitchens} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:ring-2 focus:ring-emerald-500/50 outline-none text-white font-bold">
+                                                            {[1, 2, 3, 4].map(n => <option key={n} value={n} className="bg-[#0B1121] text-white">{n} {n === 1 ? 'Kitchen' : 'Kitchens'}</option>)}
+                                                        </select>
+                                                    </div>
+                                                )}
                                             </>
                                         )}
                                     </div>
@@ -1331,12 +1364,13 @@ const BookingPage = () => {
                                                             </div>
 
                                                             {/* Extras de la empresa, con precio */}
+                                                            <IncludedNote />
                                                             {addonChoices.length > 0 && (
                                                                 <div className="grid grid-cols-2 gap-2 pt-4">
                                                                     {addonChoices.map(addon => (
                                                                         <button key={addon.code} type="button" aria-pressed={formData.extras.includes(addon.code)} onClick={() => toggleAddon(addon.code)} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${formData.extras.includes(addon.code) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
                                                                             <span>{addon.name}</span>
-                                                                            <span className="text-emerald-400">{formData.extras.includes(addon.code) ? '✓' : `+$${Number(addon.price)}`}</span>
+                                                                            <span className="text-emerald-400">{formData.extras.includes(addon.code) ? '✓' : `+$${addonPrice(addon)}`}</span>
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -1423,6 +1457,7 @@ const BookingPage = () => {
 
                                         <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl space-y-4">
                                             <h4 className="text-sm font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2"><Sparkles className="w-4 h-4" /> Optional Service Enhancements</h4>
+                                            <IncludedNote />
                                             <div className="space-y-2">
                                                 {addonChoices.map(upsell => {
                                                     const isSelected = formData.extras.includes(upsell.code);
@@ -1439,7 +1474,7 @@ const BookingPage = () => {
                                                                 {upsell.name}
                                                             </span>
                                                             <span className={`text-xs font-black ${isSelected ? 'text-emerald-400' : 'text-emerald-500'}`}>
-                                                                {isSelected ? '✓ Added' : `+$${Number(upsell.price)}`}
+                                                                {isSelected ? '✓ Added' : `+$${addonPrice(upsell)}${upsell.per_kitchen && kitchenCount > 1 ? ` (${kitchenCount} kitchens)` : ''}`}
                                                             </span>
                                                         </button>
                                                     );
