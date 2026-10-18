@@ -1209,7 +1209,7 @@ const BookingPage = () => {
 
                                                             <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
                                                                 <div className="space-y-4">
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div className="grid grid-cols-1 gap-4">
                                                                         <div className="space-y-1">
                                                                             <label className="text-[9px] font-black text-slate-500 uppercase">Your Name</label>
                                                                             <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-[#020617] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 outline-none" placeholder="John Doe" />
