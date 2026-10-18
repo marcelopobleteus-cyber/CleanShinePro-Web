@@ -1,56 +1,15 @@
 import React, { useState } from 'react';
+import { useServiceIncludes, textOf } from '../content/serviceIncludes';
+import IncludesList from '../components/IncludesList';
 import { Building2, Home, Cross, Wind, ShieldCheck, SprayCan, CheckCircle2, Star, Clock, Key, X, ArrowRight } from 'lucide-react';
 
 const ServicesPage = ({ onNavigate }) => {
     const [activeChecklist, setActiveChecklist] = useState(null);
 
-    const checklists = {
-        commercial: [
-            "Lobby & Reception Detailing",
-            "Restroom cleaning and disinfection",
-            "Workstation Disinfection",
-            "Trash & Recycling Management",
-            "Floor care (vacuum, mop, spot treatment)",
-            "Internal Glass & Window Cleaning",
-            "Breakroom & Kitchen Maintenance",
-            "High-touch points disinfected",
-            "Visit log with GPS check-in, check-out and photos"
-        ],
-        standard: [
-            "Dusting all accessible surfaces (furniture, shelves, decor)",
-            "Vacuuming and mopping all floors",
-            "Detailed bathroom cleaning (toilet, shower, sinks, mirrors)",
-            "Wiping kitchen counters & appliance exteriors",
-            "Emptying all trash bins & replacing liners",
-            "Making beds (linens must be left out)",
-            "Cleaning mirrors & glass surfaces",
-            "General tidying of common areas",
-            "Stovetop and microwave exterior cleaning"
-        ],
-        deep: [
-            "Everything in Standard Cleaning +",
-            "Baseboard detailing & hand-wiping",
-            "Inside oven cleaning (deep degreasing)",
-            "Inside microwave cleaning",
-            "Interior window tracks & sills",
-            "Door frames, handles & light switch cleaning",
-            "Detailed cabinet exterior cleaning",
-            "Grout scrubbing in showers & tubs",
-            "Dusting behind & under light furniture",
-            "Heavy grease removal in kitchen"
-        ],
-        airbnb: [
-            "Full turnover clean between guests",
-            "Laundry (wash, dry, fold) and bed making",
-            "Restocking essentials (Toilet paper, paper towels, soap, coffee)",
-            "Damage & maintenance reporting with photo evidence",
-            "Sanitizing high-touch guest areas (remotes, door knobs)",
-            "Interior fridge cleaning for fresh guest arrival",
-            "Trash removal and bin sanitation",
-            "Staging welcome items you provide",
-            "Recurring turnover schedule set with you"
-        ]
-    };
+    // Lo que incluye cada servicio: la misma lista de CleaningIQ que ven las cotizaciones y los correos
+    const includes = useServiceIncludes();
+    const KEYS = { commercial: 'commercial.office', standard: 'residential.standard', deep: 'residential.deep', airbnb: 'short_term' };
+    const checklists = Object.fromEntries(Object.entries(KEYS).map(([k, key]) => [k, includes[key] || []]));
 
     return (
         <div className="bg-[#020617] text-white min-h-screen pt-24 pb-12 overflow-x-hidden">
@@ -66,16 +25,9 @@ const ServicesPage = ({ onNavigate }) => {
                         </button>
                         <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
                             <CheckCircle2 className="text-emerald-400" />
-                            {activeChecklist === 'airbnb' ? 'Airbnb Turnover' : activeChecklist.charAt(0).toUpperCase() + activeChecklist.slice(1)} Checklist
+                            {activeChecklist === 'airbnb' ? 'Airbnb Turnover' : activeChecklist.charAt(0).toUpperCase() + activeChecklist.slice(1)} — What's included
                         </h3>
-                        <ul className="space-y-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                            {checklists[activeChecklist].map((item, i) => (
-                                <li key={i} className="flex items-start gap-4 text-slate-300">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 shrink-0"></div>
-                                    <span className="text-sm leading-relaxed">{item}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <IncludesList items={checklists[activeChecklist]} title={false} className="max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar" />
                         <button
                             onClick={() => {
                                 setActiveChecklist(null);
@@ -83,8 +35,8 @@ const ServicesPage = ({ onNavigate }) => {
                                     serviceType: activeChecklist,
                                     subService: {
                                         title: activeChecklist === 'airbnb' ? 'Airbnb Turnover' : activeChecklist.charAt(0).toUpperCase() + activeChecklist.slice(1),
-                                        desc: checklists[activeChecklist][0],
-                                        features: checklists[activeChecklist].slice(1, 4)
+                                        desc: textOf(checklists[activeChecklist][0], 'en'),
+                                        features: checklists[activeChecklist].slice(1, 4).map((i) => textOf(i, 'en'))
                                     }
                                 });
                             }}
