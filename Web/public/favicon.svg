@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <clipPath id="s">
+      <path d="M9 13 Q30 5 55 6 L55 33 Q55 51 32 61 Q9 51 9 33 Z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#s)">
+    <rect width="64" height="64" fill="#1D4E9E"/>
+    <polygon points="62,0 64,64 0,64" fill="#2E9B4E"/>
+    <line x1="62" y1="0" x2="0" y2="64" stroke="#fff" stroke-width="3"/>
+  </g>
+  <path d="M36 13 Q38.6 24.4 50 27 Q38.6 29.6 36 41 Q33.4 29.6 22 27 Q33.4 24.4 36 13 Z" fill="#fff"/>
+</svg>
