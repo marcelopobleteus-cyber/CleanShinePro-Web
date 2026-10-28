@@ -19,7 +19,7 @@ const C = {
         stats: [
             { icon: BadgeDollarSign, big: '70–80%', small: 'of every job is yours' },
             { icon: Wallet, big: 'Weekly', small: 'pay by direct deposit' },
-            { icon: Handshake, big: '$0', small: 'to join, no monthly fee' },
+            { icon: Handshake, big: '$0', small: 'to join, app free at the start' },
             { icon: CalendarCheck, big: 'You choose', small: 'which jobs to accept' },
         ],
         splitTitle: 'Who does what',
@@ -48,7 +48,7 @@ const C = {
         ],
         tableNote: 'Examples for a 3-bedroom home in Acworth and a 4-hour office visit. Real prices depend on the home, the service and the ZIP code. Tips are 100% yours. Percentages are set in the partner agreement and never change on a job you already accepted.',
         appTitle: 'The tools come included',
-        appSub: 'Every partner gets the CleaningIQ team app at no cost.',
+        appSub: 'Every partner gets the CleaningIQ team app free at the start, with a comfortable period before any fee.',
         app: [
             { icon: Smartphone, t: 'Job offers on your phone', d: 'Accept or pass in one tap.' },
             { icon: MapPin, t: 'Route & access notes', d: 'Address, parking, gate codes and pets.' },
@@ -85,7 +85,7 @@ const C = {
         stats: [
             { icon: BadgeDollarSign, big: '70–80 %', small: 'de cada trabajo es tuyo' },
             { icon: Wallet, big: 'Semanal', small: 'pago por depósito directo' },
-            { icon: Handshake, big: '$0', small: 'para entrar, sin mensualidad' },
+            { icon: Handshake, big: '$0', small: 'para entrar, app gratis al inicio' },
             { icon: CalendarCheck, big: 'Tú eliges', small: 'qué trabajos aceptar' },
         ],
         splitTitle: 'Quién hace qué',
@@ -114,7 +114,7 @@ const C = {
         ],
         tableNote: 'Ejemplos para una casa de 3 dormitorios en Acworth y una visita de oficina de 4 horas. El precio real depende de la casa, el servicio y el código postal. Las propinas son 100 % tuyas. Los porcentajes están en el contrato de socio y nunca cambian en un trabajo que ya aceptaste.',
         appTitle: 'Las herramientas vienen incluidas',
-        appSub: 'Cada socio recibe gratis la app de equipo de CleaningIQ.',
+        appSub: 'Cada socio recibe la app de equipo de CleaningIQ gratis al inicio, con un periodo cómodo antes de cualquier cuota.',
         app: [
             { icon: Smartphone, t: 'Ofertas en tu celular', d: 'Acepta o pasa con un toque.' },
             { icon: MapPin, t: 'Ruta y notas de acceso', d: 'Dirección, estacionamiento, códigos y mascotas.' },
@@ -365,7 +365,7 @@ export default function PartnersPage({ lang = 'en' }) {
                         <h2 className="text-3xl font-bold mb-5">{c.reqTitle}</h2>
                         <ul className="space-y-3 mb-8">{c.req.map((x) => <li key={x} className="flex gap-3 text-slate-300"><ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />{x}</li>)}</ul>
                         <div className="hidden lg:block bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-slate-400">
-                            <X className="w-4 h-4 inline mr-1 text-slate-500" />{lang === 'es' ? 'Sin cuota de inscripción, sin mensualidad, sin compra de leads.' : 'No sign-up fee, no monthly fee, no buying leads.'}
+                            <X className="w-4 h-4 inline mr-1 text-slate-500" />{lang === 'es' ? 'Sin cuota de inscripción, sin compra de leads y la app gratis al inicio.' : 'No sign-up fee, no buying leads, and the app is free at the start.'}
                         </div>
                     </div>
                     <div>
