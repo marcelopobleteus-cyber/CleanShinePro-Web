@@ -66,7 +66,7 @@ export default function HowItWorksPage() {
                     </div>
                     <div className="bg-violet-700/20 border border-violet-400/30 rounded-2xl p-8">
                         <h2 className="text-2xl font-bold mb-3">Run a cleaning company?</h2>
-                        <p className="text-slate-300 mb-6">Get jobs from our network and use CleaningIQ at no cost.</p>
+                        <p className="text-slate-300 mb-6">Get jobs from our network and use CleaningIQ free at the start.</p>
                         <Link to="/partners" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#0A2E5C] font-bold rounded-lg">See the partner program <ArrowRight className="w-4 h-4" /></Link>
                     </div>
                 </div>
