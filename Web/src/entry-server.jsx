@@ -43,6 +43,7 @@ const business = () => ({
     url: SITE_URL,
     email: BUSINESS.email,
     telephone: BUSINESS.phone,
+    sameAs: [BUSINESS.linkedin],
     image: `${SITE_URL}/og-image.png`,
     logo: `${SITE_URL}/logo.png`,
     priceRange: '$$',
