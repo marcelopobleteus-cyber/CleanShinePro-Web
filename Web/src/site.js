@@ -8,6 +8,7 @@ export const BUSINESS = {
     name: 'CleanShine Pro',
     legalName: 'CleanShine Pro LLC',
     email: 'contact@cleanshinepro.com',
+    linkedin: 'https://www.linkedin.com/company/cleanshine-pro',
     // Linea de la recepcionista de voz (Vapi): contesta 24/7 en ingles y espanol
     phone: '+14704921093',
     phoneDisplay: '(470) 492-1093',
