@@ -28,10 +28,10 @@ const C = {
         you: ['Accept the jobs that fit your schedule', 'Clean to our checklist and standards', 'Check in and out in the app, with photos', 'Keep your insurance and documents current'],
         stepsTitle: 'How it works',
         steps: [
-            { t: 'Apply', d: 'Three minutes, from your phone. Tell us your ZIP codes, services and team size.' },
+            { t: 'Apply', d: 'Three minutes, from your phone. Tell us where you work, your services and team size.' },
             { t: 'Quick call & documents', d: 'We review your application, talk for 15 minutes and you upload your W-9 and insurance certificate.' },
             { t: 'Sign online', d: 'Read and sign the partner agreement in English or Spanish, from the app.' },
-            { t: 'Set your area', d: 'Choose your ZIP codes or a radius from your address. You only see jobs there.' },
+            { t: 'Set your area', d: 'Choose counties, cities or ZIP codes, or a radius from your address. You only see jobs there.' },
             { t: 'Accept jobs', d: 'Each offer shows the address area, date, scope, price and your pay. First to accept gets it.' },
             { t: 'Clean & report', d: 'Check in by GPS, follow the checklist, take photos, check out. Extras need the customer’s approval.' },
             { t: 'Get paid weekly', d: 'Statement every Monday, payment that same week, 1099 at year end.' },
@@ -71,7 +71,7 @@ const C = {
         faqTitle: 'Partner questions',
         formTitle: 'Apply to join the network',
         formSub: 'It takes about 3 minutes. A person on our team reviews every application; nothing is sent automatically.',
-        f: { company: 'Company name', contact: 'Your name', email: 'Email', phone: 'Phone', zips: 'ZIP codes you serve', zipsHelp: 'Separate with commas, e.g. 30101, 30144, 30188', services: 'Services you offer', years: 'Years in business', team: 'People on your team', insured: 'We have general liability insurance', w9: 'We can provide a W-9', license: 'We have a business license', ref: 'Who referred you? (optional)', msg: 'Anything else? (optional)', submit: 'Send my application', sending: 'Sending…' },
+        f: { company: 'Company name', contact: 'Your name', email: 'Email', phone: 'Phone', areas: 'Where you work', areasHelp: 'Cities, counties or ZIP codes, however you say them. You do not need to know ZIP codes, e.g. Woodstock, Gwinnett County.', areasPlaceholder: 'Woodstock, Gwinnett County', services: 'Services you offer', years: 'Years in business', team: 'People on your team', insured: 'We have general liability insurance', w9: 'We can provide a W-9', license: 'We have a business license', ref: 'Who referred you? (optional)', msg: 'Anything else? (optional)', submit: 'Send my application', sending: 'Sending…' },
         consent: `Yes, ${COMPANY} may contact me by email and phone about becoming a cleaning partner. I can opt out at any time. Consent is not a condition of applying.`,
         okTitle: 'Application received', okText: 'Thank you. Our team will review it and contact you within 2 business days.', okSched: 'Want to talk sooner? Book a 15-minute call', okNot: 'To work with the network you will need liability insurance and a W-9. We saved your application and will contact you.',
         err: 'Could not send your application. Please try again or write to contact@cleanshinepro.com.',
@@ -94,10 +94,10 @@ const C = {
         you: ['Aceptar los trabajos que te convienen', 'Limpiar según nuestra lista y estándares', 'Registrar llegada y salida en la app, con fotos', 'Mantener tu seguro y documentos al día'],
         stepsTitle: 'Cómo funciona',
         steps: [
-            { t: 'Postula', d: 'Tres minutos, desde tu celular. Cuéntanos tus códigos postales, servicios y tamaño del equipo.' },
+            { t: 'Postula', d: 'Tres minutos, desde tu celular. Cuéntanos dónde trabajas, tus servicios y el tamaño del equipo.' },
             { t: 'Llamada y documentos', d: 'Revisamos tu solicitud, hablamos 15 minutos y subes tu W-9 y tu certificado de seguro.' },
             { t: 'Firma en línea', d: 'Lee y firma el contrato de socio en inglés o español, desde la app.' },
-            { t: 'Define tu zona', d: 'Elige tus códigos postales o un radio desde tu dirección. Solo ves trabajos ahí.' },
+            { t: 'Define tu zona', d: 'Elige condados, ciudades o códigos postales, o un radio desde tu dirección. Solo ves trabajos ahí.' },
             { t: 'Acepta trabajos', d: 'Cada oferta muestra la zona, fecha, alcance, precio y tu pago. El primero que acepta lo hace.' },
             { t: 'Limpia y reporta', d: 'Registra la llegada por GPS, sigue la lista, toma fotos y registra la salida. Los extras necesitan la aprobación del cliente.' },
             { t: 'Cobra cada semana', d: 'Estado de cuenta cada lunes, pago esa misma semana y 1099 a fin de año.' },
@@ -137,7 +137,7 @@ const C = {
         faqTitle: 'Preguntas de socios',
         formTitle: 'Postula para entrar a la red',
         formSub: 'Toma unos 3 minutos. Una persona de nuestro equipo revisa cada solicitud; nada se envía de forma automática.',
-        f: { company: 'Nombre de la empresa', contact: 'Tu nombre', email: 'Correo', phone: 'Teléfono', zips: 'Códigos postales que cubres', zipsHelp: 'Sepáralos con comas, ej. 30101, 30144, 30188', services: 'Servicios que ofreces', years: 'Años en el negocio', team: 'Personas en tu equipo', insured: 'Tenemos seguro de responsabilidad civil', w9: 'Podemos entregar un W-9', license: 'Tenemos licencia comercial', ref: '¿Quién te recomendó? (opcional)', msg: '¿Algo más? (opcional)', submit: 'Enviar mi solicitud', sending: 'Enviando…' },
+        f: { company: 'Nombre de la empresa', contact: 'Tu nombre', email: 'Correo', phone: 'Teléfono', areas: 'Dónde trabajas', areasHelp: 'Ciudades, condados o códigos postales, como los digas. No necesitas saber los códigos postales, ej. Woodstock, condado de Gwinnett.', areasPlaceholder: 'Woodstock, condado de Gwinnett', services: 'Servicios que ofreces', years: 'Años en el negocio', team: 'Personas en tu equipo', insured: 'Tenemos seguro de responsabilidad civil', w9: 'Podemos entregar un W-9', license: 'Tenemos licencia comercial', ref: '¿Quién te recomendó? (opcional)', msg: '¿Algo más? (opcional)', submit: 'Enviar mi solicitud', sending: 'Enviando…' },
         consent: `Sí, ${COMPANY} puede contactarme por correo y teléfono sobre ser socio de limpieza. Puedo darme de baja en cualquier momento. El consentimiento no es condición para postular.`,
         okTitle: 'Solicitud recibida', okText: 'Gracias. Nuestro equipo la revisará y te contactará dentro de 2 días hábiles.', okSched: '¿Quieres hablar antes? Agenda una llamada de 15 minutos', okNot: 'Para trabajar con la red necesitas seguro de responsabilidad civil y un W-9. Guardamos tu solicitud y te contactaremos.',
         err: 'No se pudo enviar tu solicitud. Inténtalo otra vez o escribe a contact@cleanshinepro.com.',
@@ -145,7 +145,7 @@ const C = {
     },
 };
 
-const EMPTY = { company_name: '', contact_name: '', email: '', phone: '', zips: '', services: [], years_in_business: '', team_size: '', insured: false, can_provide_w9: false, has_license: false, referred_by: '', message: '', consent: false, website_url: '' };
+const EMPTY = { company_name: '', contact_name: '', email: '', phone: '', areas: '', services: [], years_in_business: '', team_size: '', insured: false, can_provide_w9: false, has_license: false, referred_by: '', message: '', consent: false, website_url: '' };
 const input = 'w-full bg-[#020617] border border-white/15 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 outline-none';
 const label = 'block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2';
 
@@ -199,9 +199,9 @@ function ApplyForm({ c, lang }) {
                 <div><label className={label} htmlFor="pa-phone">{c.f.phone}</label><input id="pa-phone" required type="tel" className={input} value={form.phone} onChange={set('phone')} autoComplete="tel" /></div>
             </div>
             <div>
-                <label className={label} htmlFor="pa-zips">{c.f.zips}</label>
-                <input id="pa-zips" required className={input} value={form.zips} onChange={set('zips')} inputMode="numeric" placeholder="30101, 30144" />
-                <p className="text-xs text-slate-500 mt-1">{c.f.zipsHelp}</p>
+                <label className={label} htmlFor="pa-areas">{c.f.areas}</label>
+                <input id="pa-areas" required maxLength={500} className={input} value={form.areas} onChange={set('areas')} autoComplete="off" placeholder={c.f.areasPlaceholder} />
+                <p className="text-xs text-slate-500 mt-1">{c.f.areasHelp}</p>
             </div>
             <fieldset>
                 <legend className={label}>{c.f.services}</legend>
