@@ -1062,6 +1062,8 @@ const BookingPage = () => {
                                         <option className="bg-[#0B1121] text-white" value="weekly">Weekly (Recurring Discount)</option>
                                         <option className="bg-[#0B1121] text-white" value="bi-weekly">Bi-Weekly (Recurring Discount)</option>
                                         <option className="bg-[#0B1121] text-white" value="monthly">Monthly Maintenance</option>
+                                        <option className="bg-[#0B1121] text-white" value="twice-weekly">2 Times a Week (Biggest Discount)</option>
+                                        <option className="bg-[#0B1121] text-white" value="three-weekly">3 Times a Week (Biggest Discount)</option>
                                     </select>
                                 </div>
 
