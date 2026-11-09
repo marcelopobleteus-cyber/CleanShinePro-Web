@@ -37,8 +37,15 @@ function kitchensOf(data) {
 // Clave del servicio igual que en CleaningIQ ('residential.deep', 'short_term'): para saber que extras ya incluye
 const serviceKeyOf = (data) => (data.mainService === 'short_term' || !data.subService ? data.mainService : `${data.mainService}.${data.subService}`);
 
+// Extras que se cobran por unidad (lavanderia por carga, precio fijo por carga). Igual que UNIT_ADDONS del motor de CleaningIQ.
+const UNIT_ADDONS = { laundry: { one: 'load', many: 'loads' } };
+const MAX_UNITS = 10;
+const unitQtyOf = (data, code) => Math.max(1, Math.min(Math.round(Number(data.extraQty?.[code])) || 1, MAX_UNITS));
+const extraQtyOf = (data) => Object.fromEntries((data.extras || []).filter(c => UNIT_ADDONS[c] && unitQtyOf(data, c) > 1).map(c => [c, unitQtyOf(data, c)]));
+
 function toQuoteInput(data, recurringConversion) {
     return {
+        extraQty: extraQtyOf(data),
         mainService: data.mainService, subService: data.subService,
         sqft: data.sqft, beds: data.beds, baths: data.baths, frequency: data.frequency,
         extras: data.extras, basementType: data.basementType, levels: data.levels,
@@ -161,6 +168,7 @@ const BookingPage = () => {
         levels: 1,
         kitchens: '1',
         extras: [],
+        extraQty: {},
         quoteMode: 'SQFT', // 'SQFT' or 'AREAS'
         roomSelection: {
             kitchen: 1,
@@ -369,6 +377,27 @@ const BookingPage = () => {
             }
         }, 400);
     }, [formData, isRecurringConverted]);
+
+    // Cantidad de un extra por unidad (cargas de ropa) y recalcular
+    const setAddonQty = (code, n) => {
+        const nextState = { ...formData, extraQty: { ...formData.extraQty, [code]: Math.max(1, Math.min(n, MAX_UNITS)) } };
+        setFormData(nextState);
+        calculateAdvancedEstimate(nextState);
+    };
+    const QtyStepper = ({ code }) => {
+        const unit = UNIT_ADDONS[code];
+        if (!unit || !formData.extras.includes(code)) return null;
+        const n = unitQtyOf(formData, code);
+        const btn = 'w-7 h-7 rounded-full border border-white/20 bg-white/5 text-white flex items-center justify-center text-sm font-black disabled:opacity-40';
+        return (
+            <div className="col-span-full flex items-center justify-end gap-2 text-[10px] font-black text-slate-300">
+                <span>How many {unit.many}?</span>
+                <button type="button" className={btn} disabled={n <= 1} onClick={() => setAddonQty(code, n - 1)} aria-label={`Fewer ${unit.many}`}>−</button>
+                <span className="min-w-[3.5rem] text-center text-white" aria-live="polite">{n} {n === 1 ? unit.one : unit.many}</span>
+                <button type="button" className={btn} disabled={n >= MAX_UNITS} onClick={() => setAddonQty(code, n + 1)} aria-label={`More ${unit.many}`}>+</button>
+            </div>
+        );
+    };
 
     // Agregar o quitar un extra y recalcular
     const toggleAddon = (code) => {
@@ -1310,10 +1339,13 @@ const BookingPage = () => {
                                                             {addonChoices.length > 0 && (
                                                                 <div className="grid grid-cols-2 gap-2 pt-4">
                                                                     {addonChoices.map(addon => (
-                                                                        <button key={addon.code} type="button" aria-pressed={formData.extras.includes(addon.code)} onClick={() => toggleAddon(addon.code)} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${formData.extras.includes(addon.code) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
+                                                                        <React.Fragment key={addon.code}>
+                                                                        <button type="button" aria-pressed={formData.extras.includes(addon.code)} onClick={() => toggleAddon(addon.code)} className={`p-3 rounded-xl border text-[10px] font-black transition-all flex justify-between items-center ${formData.extras.includes(addon.code) ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
                                                                             <span>{addon.name}</span>
-                                                                            <span className="text-emerald-400">{formData.extras.includes(addon.code) ? '✓' : `+$${addonPrice(addon)}`}</span>
+                                                                            <span className="text-emerald-400">{formData.extras.includes(addon.code) ? '✓' : `+$${addonPrice(addon)}${UNIT_ADDONS[addon.code] ? ` / ${UNIT_ADDONS[addon.code].one}` : ''}`}</span>
                                                                         </button>
+                                                                        <QtyStepper code={addon.code} />
+                                                                        </React.Fragment>
                                                                     ))}
                                                                 </div>
                                                             )}
@@ -1399,8 +1431,8 @@ const BookingPage = () => {
                                                 {addonChoices.map(upsell => {
                                                     const isSelected = formData.extras.includes(upsell.code);
                                                     return (
+                                                        <React.Fragment key={upsell.code}>
                                                         <button
-                                                            key={upsell.code}
                                                             type="button"
                                                             aria-pressed={isSelected}
                                                             onClick={() => toggleAddon(upsell.code)}
@@ -1411,9 +1443,11 @@ const BookingPage = () => {
                                                                 {upsell.name}
                                                             </span>
                                                             <span className={`text-xs font-black ${isSelected ? 'text-emerald-400' : 'text-emerald-500'}`}>
-                                                                {isSelected ? '✓ Added' : `+$${addonPrice(upsell)}${upsell.per_kitchen && kitchenCount > 1 ? ` (${kitchenCount} kitchens)` : ''}`}
+                                                                {isSelected ? '✓ Added' : `+$${addonPrice(upsell)}${UNIT_ADDONS[upsell.code] ? ` / ${UNIT_ADDONS[upsell.code].one}` : ''}${upsell.per_kitchen && kitchenCount > 1 ? ` (${kitchenCount} kitchens)` : ''}`}
                                                             </span>
                                                         </button>
+                                                        <QtyStepper code={upsell.code} />
+                                                        </React.Fragment>
                                                     );
                                                 })}
                                             </div>
